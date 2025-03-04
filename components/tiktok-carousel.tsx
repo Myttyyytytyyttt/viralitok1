@@ -74,12 +74,54 @@ export default function TikTokCarousel() {
           const data = await response.json();
           if (data.tokens && data.tokens.length > 0) {
             setFeaturedTokens(data.tokens);
+          } else if (data.useMockData) {
+            // Si la API indica que deberíamos usar datos simulados
+            console.info('Usando datos simulados debido a problemas de conexión con la base de datos');
+            // Crear tokens simulados basados en mockTikToks
+            const mockTokens = mockTikToks.map((mock, index) => ({
+              address: `mock_address_${index}`,
+              name: mock.description,
+              symbol: mock.tokenPrice,
+              tiktokUrl: mock.videoUrl,
+              tiktokId: `tiktok_${index}`,
+              creator: mock.username,
+              timestamp: Date.now(), // Usando timestamp en milisegundos (número)
+              signature: '',
+              imageUrl: ''
+            }));
+            setFeaturedTokens(mockTokens);
           }
         } else {
-          console.error('Error al obtener tokens aleatorios');
+          console.error('Error al obtener tokens aleatorios:', response.status);
+          // Usar datos de respaldo si la API falla
+          const mockTokens = mockTikToks.map((mock, index) => ({
+            address: `mock_address_${index}`,
+            name: mock.description,
+            symbol: mock.tokenPrice,
+            tiktokUrl: mock.videoUrl,
+            tiktokId: `tiktok_${index}`,
+            creator: mock.username,
+            timestamp: Date.now(), // Usando timestamp en milisegundos (número)
+            signature: '',
+            imageUrl: ''
+          }));
+          setFeaturedTokens(mockTokens);
         }
       } catch (error) {
         console.error('Error al conectar con API:', error);
+        // Usar datos de respaldo si la API falla
+        const mockTokens = mockTikToks.map((mock, index) => ({
+          address: `mock_address_${index}`,
+          name: mock.description,
+          symbol: mock.tokenPrice,
+          tiktokUrl: mock.videoUrl,
+          tiktokId: `tiktok_${index}`,
+          creator: mock.username,
+          timestamp: Date.now(), // Usando timestamp en milisegundos (número)
+          signature: '',
+          imageUrl: ''
+        }));
+        setFeaturedTokens(mockTokens);
       } finally {
         setInitialLoading(false);
       }

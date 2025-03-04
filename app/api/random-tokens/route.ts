@@ -1,16 +1,54 @@
 import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 
+// Función utilitaria para reintento con backoff exponencial
+async function retryOperation(operation: Function, maxRetries = 3): Promise<any> {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      // Timeout para la operación
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Operación cancelada por timeout')), 8000)
+      );
+      
+      // Ejecutar operación con timeout
+      const result = await Promise.race([
+        operation(),
+        timeoutPromise
+      ]);
+      
+      return result; // Si la operación tiene éxito, devolvemos el resultado
+    } catch (error) {
+      lastError = error;
+      console.warn(`Intento ${attempt + 1} fallido:`, error);
+      
+      // Esperar antes de reintentar (backoff exponencial)
+      const backoffTime = Math.min(1000 * Math.pow(2, attempt), 5000);
+      await new Promise(resolve => setTimeout(resolve, backoffTime));
+    }
+  }
+  
+  throw lastError;
+}
+
 export async function GET() {
   try {
-    // Recuperar todos los tokens de Supabase
-    const { data, error } = await supabase
-      .from('tokens')
-      .select('*')
+    // Usar retry para la consulta a Supabase
+    const { data, error } = await retryOperation(async () => {
+      return await supabase
+        .from('tokens')
+        .select('*')
+    });
     
     if (error) {
       console.error('Error al recuperar tokens de Supabase:', error)
-      return NextResponse.json({ error: 'Error al recuperar tokens' }, { status: 500 })
+      // Devolver respuesta de error que muestra datos simulados en el frontend
+      return NextResponse.json({ 
+        tokens: [], 
+        error: 'Error al recuperar tokens', 
+        useMockData: true 
+      }, { status: 200 }) // Devolvemos 200 para que el frontend pueda manejar la situación
     }
     
     if (!data || data.length === 0) {
@@ -53,6 +91,11 @@ export async function GET() {
     return NextResponse.json({ tokens: formattedTokens })
   } catch (error) {
     console.error('Error al obtener tokens aleatorios:', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    // Devolver respuesta que permite continuar al frontend
+    return NextResponse.json({ 
+      tokens: [], 
+      error: 'Error al conectar con la base de datos',
+      useMockData: true 
+    }, { status: 200 }) // Usamos 200 para que el frontend pueda manejar la situación
   }
 } 

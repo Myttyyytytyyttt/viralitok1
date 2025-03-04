@@ -2,7 +2,7 @@
 
 import { GlitchLogo } from "@/components/glitch-logo"
 import TikTokCarousel from "@/components/tiktok-carousel"
-import { AlertTriangle, Send, Plus, Menu, X } from "lucide-react"
+import { AlertTriangle, Send, Plus, Menu, X, Twitter } from "lucide-react"
 import TikTokMiniExplorer from "@/components/tiktok-mini-explorer"
 import { useState } from "react"
 import LaunchButton from "@/components/launch-button"
@@ -58,10 +58,10 @@ export default function Home() {
           {/* Right Section */}
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
-              <button className="px-6 py-2 text-sm border border-[#333] rounded-sm hover:bg-[#111] transition flex items-center gap-2">
-                <Send size={16} />
-                JOIN TELEGRAM
-              </button>
+              <a href="https://twitter.com/Viralitok_sol" target="_blank" rel="noopener noreferrer" className="px-6 py-2 text-sm border border-[#333] rounded-sm hover:bg-[#111] transition flex items-center gap-2">
+                <Twitter size={16} />
+                FOLLOW TWITTER
+              </a>
               
               {/* Usar nuestro componente personalizado */}
               <div className="wallet-adapter-dropdown">
@@ -176,7 +176,9 @@ export default function Home() {
                 START TOKENIZING
               </button>
               <button className="w-full py-2 border border-[#333] hover:bg-[#111] transition flex items-center justify-center gap-2 rounded-sm text-sm">
-                JOIN TELEGRAM
+                <a href="https://pump.fun/token/vtok" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
+                  BUY $VTOK
+                </a>
               </button>
             </div>
           </div>

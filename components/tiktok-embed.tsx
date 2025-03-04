@@ -1,6 +1,17 @@
 "use client"
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+// Extendemos la interfaz Window para incluir la propiedad tiktok
+declare global {
+  interface Window {
+    tiktok?: {
+      embed: {
+        reload: () => void;
+      };
+    };
+  }
+}
 
 interface TikTokEmbedProps {
   url: string;
@@ -8,15 +19,50 @@ interface TikTokEmbedProps {
 
 export default function TikTokEmbed({ url }: TikTokEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const scriptLoadedRef = useRef(false);
   
   useEffect(() => {
-    // Cargar el script de TikTok que convierte los blockquotes en iframes
-    const script = document.createElement('script');
-    script.src = 'https://www.tiktok.com/embed.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Reset estados
+    setHasError(false);
+    setIsLoading(true);
     
-    // Aplicar estilos adicionales para asegurar que el iframe se ajuste correctamente
+    // Verificar si el URL es válido
+    if (!url || !url.includes('tiktok.com')) {
+      console.error('URL inválido de TikTok:', url);
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Función para cargar el script de TikTok
+    const loadTikTokScript = () => {
+      // Verificar si ya existe el script en el documento
+      if (document.querySelector('script[src="https://www.tiktok.com/embed.js"]')) {
+        scriptLoadedRef.current = true;
+        return Promise.resolve();
+      }
+      
+      return new Promise<void>((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://www.tiktok.com/embed.js';
+        script.async = true;
+        script.onload = () => {
+          scriptLoadedRef.current = true;
+          resolve();
+        };
+        script.onerror = () => {
+          console.error('Error al cargar el script de TikTok Embed');
+          setHasError(true);
+          setIsLoading(false);
+          resolve();
+        };
+        document.body.appendChild(script);
+      });
+    };
+    
+    // Aplicar estilos al iframe
     const applyStyles = () => {
       if (containerRef.current) {
         const iframe = containerRef.current.querySelector('iframe');
@@ -27,30 +73,98 @@ export default function TikTokEmbed({ url }: TikTokEmbedProps) {
           iframe.style.position = 'absolute';
           iframe.style.top = '0';
           iframe.style.left = '0';
+          
+          // Marcar como cargado cuando el iframe esté listo
+          setIsLoading(false);
+          
+          // Monitorear cambios en el iframe para detectar errores de carga
+          const checkContent = () => {
+            try {
+              // Si el iframe tiene contenido, no hay error
+              if (iframe.contentWindow && iframe.contentWindow.document.body.innerHTML) {
+                return;
+              }
+            } catch (e) {
+              // Error de seguridad cross-origin es normal, no hacer nada
+            }
+          };
+          
+          checkContent();
+          return true;
         }
       }
+      return false;
     };
     
-    // Intentar aplicar estilos múltiples veces para asegurar que se apliquen después de que TikTok termine de cargar
-    const styleInterval = setInterval(applyStyles, 500);
-    setTimeout(() => clearInterval(styleInterval), 5000); // Limpiar después de 5 segundos
-    
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
+    // Intentar cargar el script y aplicar estilos
+    loadTikTokScript().then(() => {
+      // Si el script ya estaba cargado, debemos manualmente disparar window.tiktok.embed.reload()
+      if (window.tiktok && window.tiktok.embed) {
+        try {
+          window.tiktok.embed.reload();
+        } catch (e) {
+          console.warn('Error al recargar embed de TikTok:', e);
+        }
       }
-      clearInterval(styleInterval);
+      
+      // Intenta aplicar estilos múltiples veces
+      let attempts = 0;
+      const maxAttempts = 20; // 10 segundos máximo (20 * 500ms)
+      
+      const styleInterval = setInterval(() => {
+        const success = applyStyles();
+        attempts++;
+        
+        // Detener intentos después de aplicar estilos con éxito o alcanzar máximo de intentos
+        if (success || attempts >= maxAttempts) {
+          clearInterval(styleInterval);
+          // Si después de todos los intentos no se pudo cargar, mostrar error
+          if (!success && attempts >= maxAttempts) {
+            console.warn(`No se pudo cargar el TikTok después de ${attempts} intentos`);
+            setHasError(true);
+            setIsLoading(false);
+          }
+        }
+      }, 500);
+      
+      return () => clearInterval(styleInterval);
+    });
+    
+    // Limpieza
+    return () => {
+      // No eliminamos el script para evitar recargas innecesarias
     };
   }, [url]);
 
   // Extraer el ID del video de la URL
   const getVideoId = (url: string) => {
-    const match = url.match(/video\/(\d+)/);
-    return match ? match[1] : '';
+    try {
+      const match = url.match(/video\/(\d+)/);
+      return match ? match[1] : '';
+    } catch (e) {
+      console.error('Error al extraer ID de TikTok:', e);
+      return '';
+    }
   };
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-[#111] p-4 text-center">
+        <div>
+          <p className="text-red-400 mb-2">Error al cargar el TikTok</p>
+          <p className="text-sm text-gray-400">Intenta recargar la página</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="w-full h-full overflow-hidden">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-8 h-8 border-2 border-[#8A2BE2] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
       <div className="relative w-full h-full">
         <blockquote 
           className="tiktok-embed" 

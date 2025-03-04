@@ -3,52 +3,45 @@
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { DollarSign, ChevronLeft, ChevronRight } from "lucide-react"
-import TikTokEmbed from "./tiktok-embed"
 import { TokenData } from "@/types"
+import LocalVideoPlayer from "./local-video-player"
 
-// Array de respaldo en caso de error o mientras se cargan los datos
-const mockTikToks = [
+// Lista de videos locales
+const localVideos = [
   {
     id: 1,
-    username: "@viral_creator",
-    description: "This dance went viral overnight! #trending #dance",
+    videoSrc: "/vid1.mp4",
+    description: "Popular dance trending on TikTok",
+    username: "@dancer_pro",
+    tokenPrice: "0.045 SOL",
+    tokenChange: "+12.5%",
     likes: "1.2M",
     comments: "24.5K",
-    tokenPrice: "0.045",
-    tokenChange: "+12.5%",
-    videoUrl: "/placeholder.svg?height=600&width=340",
+    creator: "0x1234...5678"
   },
   {
     id: 2,
-    username: "@crypto_influencer",
-    description: "Explaining ViraliTok in 15 seconds! #crypto",
+    videoSrc: "/vid2.mp4",
+    description: "Funny moments captured on camera",
+    username: "@funnymoments",
+    tokenPrice: "0.078 SOL",
+    tokenChange: "+5.2%",
     likes: "458K",
     comments: "12.3K",
-    tokenPrice: "0.078",
-    tokenChange: "+5.2%",
-    videoUrl: "/placeholder.svg?height=600&width=340",
+    creator: "0x8765...4321"
   },
   {
     id: 3,
-    username: "@meme_master",
-    description: "This meme is now worth $10K! #nft",
+    videoSrc: "/vid3.mp4",
+    description: "Cute cat doing amazing tricks",
+    username: "@catlover",
+    tokenPrice: "0.125 SOL",
+    tokenChange: "+28.7%",
     likes: "2.4M",
     comments: "56K",
-    tokenPrice: "0.125",
-    tokenChange: "+28.7%",
-    videoUrl: "/placeholder.svg?height=600&width=340",
-  },
-]
-
-// Función para extraer el nombre de usuario desde la URL de TikTok
-const extractUsername = (url: string): string => {
-  try {
-    const matches = url.match(/@([a-zA-Z0-9_.-]+)/);
-    return matches ? `@${matches[1]}` : "@user";
-  } catch (err) {
-    return "@user";
+    creator: "0xabcd...efgh"
   }
-};
+];
 
 // Función para truncar la dirección del creador
 const truncateAddress = (address: string): string => {
@@ -59,76 +52,26 @@ const truncateAddress = (address: string): string => {
 
 export default function TikTokCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [opacity, setOpacity] = useState(1) // Control de opacidad
-  const [featuredTokens, setFeaturedTokens] = useState<TokenData[]>([])
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(false)
   
-  // Cargar tokens aleatorios al montar el componente
-  useEffect(() => {
-    const fetchRandomTokens = async () => {
-      try {
-        const response = await fetch('/api/random-tokens');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.tokens && data.tokens.length > 0) {
-            setFeaturedTokens(data.tokens);
-          } else if (data.useMockData) {
-            // Si la API indica que deberíamos usar datos simulados
-            console.info('Usando datos simulados debido a problemas de conexión con la base de datos');
-            // Crear tokens simulados basados en mockTikToks
-            const mockTokens = mockTikToks.map((mock, index) => ({
-              address: `mock_address_${index}`,
-              name: mock.description,
-              symbol: mock.tokenPrice,
-              tiktokUrl: mock.videoUrl,
-              tiktokId: `tiktok_${index}`,
-              creator: mock.username,
-              timestamp: Date.now(), // Usando timestamp en milisegundos (número)
-              signature: '',
-              imageUrl: ''
-            }));
-            setFeaturedTokens(mockTokens);
-          }
-        } else {
-          console.error('Error al obtener tokens aleatorios:', response.status);
-          // Usar datos de respaldo si la API falla
-          const mockTokens = mockTikToks.map((mock, index) => ({
-            address: `mock_address_${index}`,
-            name: mock.description,
-            symbol: mock.tokenPrice,
-            tiktokUrl: mock.videoUrl,
-            tiktokId: `tiktok_${index}`,
-            creator: mock.username,
-            timestamp: Date.now(), // Usando timestamp en milisegundos (número)
-            signature: '',
-            imageUrl: ''
-          }));
-          setFeaturedTokens(mockTokens);
-        }
-      } catch (error) {
-        console.error('Error al conectar con API:', error);
-        // Usar datos de respaldo si la API falla
-        const mockTokens = mockTikToks.map((mock, index) => ({
-          address: `mock_address_${index}`,
-          name: mock.description,
-          symbol: mock.tokenPrice,
-          tiktokUrl: mock.videoUrl,
-          tiktokId: `tiktok_${index}`,
-          creator: mock.username,
-          timestamp: Date.now(), // Usando timestamp en milisegundos (número)
-          signature: '',
-          imageUrl: ''
-        }));
-        setFeaturedTokens(mockTokens);
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-    
-    fetchRandomTokens();
-  }, []);
+  // Simulamos tokens a partir de nuestros videos locales
+  const featuredTokens = localVideos.map(video => ({
+    address: video.creator,
+    name: video.description,
+    symbol: video.tokenPrice.split(' ')[0], // Solo toma el valor numérico
+    tiktokUrl: video.videoSrc, // Ahora es la ruta al video local
+    tiktokId: `video-${video.id}`,
+    creator: video.username,
+    timestamp: Date.now(),
+    signature: '',
+    imageUrl: '',
+    // Datos adicionales para mostrar en la interfaz
+    tokenChange: video.tokenChange,
+    likes: video.likes,
+    comments: video.comments
+  }));
   
   // Función para cambiar slide con fade out manual
   const changeSlide = useCallback((index: number) => {
@@ -137,7 +80,7 @@ export default function TikTokCarousel() {
     setIsLoading(true);
     setCurrentIndex(index);
     
-    // Después de 1.6 segundos, iniciar el fade out
+    // Dar tiempo para cargar antes de iniciar el fade out (más corto para videos locales)
     setTimeout(() => {
       // Disminuir gradualmente la opacidad
       setOpacity(0.8);
@@ -151,7 +94,7 @@ export default function TikTokCarousel() {
           setIsLoading(false);
         }, 100);
       }, 400);
-    }, 1000);
+    }, 800); // Tiempo reducido para videos locales que cargan más rápido
   }, []);
   
   const nextSlide = useCallback(() => {
@@ -166,48 +109,16 @@ export default function TikTokCarousel() {
     changeSlide(prevIndex);
   }, [currentIndex, featuredTokens.length, changeSlide]);
 
-  // Autoplay si se desea
+  // Autoplay desactivado para estos videos
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isPlaying && featuredTokens.length > 0) {
-        nextSlide();
-      }
-    }, 5000);
+      // nextSlide(); // Comentado para desactivar el autoplay
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, nextSlide, featuredTokens]);
+  }, [nextSlide]);
 
-  // Fall back a mock data si no hay tokens reales
-  const currentTikTok = mockTikToks[currentIndex];
-  const currentToken = featuredTokens.length > 0 ? featuredTokens[currentIndex] : null;
-
-  if (initialLoading) {
-    return (
-      <div className="relative w-full max-w-sm mx-auto border border-[#333] bg-black rounded-sm overflow-hidden">
-        <div className="relative aspect-[9/16] bg-[#111] flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-[#8A2BE2] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <div className="p-3 text-center bg-[#111] text-sm font-mono">
-          <span className="text-[#8A2BE2]">LOADING</span> FEATURED TOKENS
-        </div>
-      </div>
-    );
-  }
-
-  // Si no hay tokens disponibles
-  if (featuredTokens.length === 0) {
-    return (
-      <div className="relative w-full max-w-sm mx-auto border border-[#333] bg-black rounded-sm overflow-hidden">
-        <div className="relative aspect-[9/16] bg-[#111] flex items-center justify-center flex-col p-4 text-center">
-          <p className="text-lg mb-2 text-gray-300">No tokens available</p>
-          <p className="text-sm text-gray-500">Create a token to be featured here</p>
-        </div>
-        <div className="p-3 text-center bg-[#111] text-sm font-mono">
-          <span className="text-[#8A2BE2]">FEATURED</span> VIRALITOK
-        </div>
-      </div>
-    );
-  }
+  const currentToken = featuredTokens[currentIndex];
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
@@ -228,15 +139,18 @@ export default function TikTokCarousel() {
         <ChevronRight size={24} />
       </button>
 
-      {/* TikTok Display */}
+      {/* Video Display */}
       <div className="relative border border-[#333] bg-black rounded-sm overflow-hidden">
         <div className="relative aspect-[9/16] bg-[#111]">
-          {/* Video de TikTok - Siempre se muestra, incluso durante la carga */}
+          {/* Video Local */}
           <div className="w-full h-full">
             {currentToken && (
-              <TikTokEmbed 
-                key={`tiktok-${currentIndex}-${Date.now()}`}
-                url={currentToken.tiktokUrl} 
+              <LocalVideoPlayer
+                key={`video-${currentIndex}`}
+                src={currentToken.tiktokUrl}
+                autoPlay={true}
+                loop={true}
+                muted={true}
               />
             )}
           </div>
@@ -251,49 +165,42 @@ export default function TikTokCarousel() {
             </div>
           )}
 
-          {/* Información superior */}
-          <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-20">
-            <h3 className="font-medium text-sm">
-              {currentToken 
-                ? truncateAddress(currentToken.creator) 
-                : currentTikTok.username}
-            </h3>
-            <p className="text-xs text-gray-300">
-              {currentToken 
-                ? currentToken.name
-                : currentTikTok.description}
-            </p>
-          </div>
-
-          {/* Estadísticas inferiores */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent z-20">
-            <div className="flex items-center gap-4">
-              <div className="ml-auto flex items-center gap-1 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
-                <DollarSign size={16} className="text-[#8A2BE2]" />
-                <span>{currentToken ? currentToken.symbol : currentTikTok.tokenPrice}</span>
-                {/* Si se quiere mostrar un cambio de precio, se puede agregar aquí */}
+          {/* Info Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-black/0">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-sm font-medium">{currentToken?.creator || '@username'}</p>
+                <p className="text-xs text-gray-400 mt-1 line-clamp-2">{currentToken?.name || 'Video description'}</p>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-mono bg-[#8A2BE2] px-2 py-1 rounded-sm">
+                  {currentToken?.symbol || '0.00'} SOL
+                </span>
+                <span className="text-xs text-green-500 mt-1">{localVideos[currentIndex]?.tokenChange || '+0.0%'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Barra de progreso */}
-        <div className="h-1 bg-[#111] flex">
-          {featuredTokens.map((_, i) => (
-            <div
-              key={i}
-              className={`flex-1 transition-all duration-200 ${
-                i === currentIndex ? "bg-gradient-to-r from-[#8A2BE2] to-[#4CAF50]" : ""
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="p-3 text-center bg-[#111] text-sm font-mono">
-          <span className="text-[#8A2BE2]">FEATURED</span> VIRALITOK
+        {/* Info Bar */}
+        <div className="flex justify-between items-center p-3 border-t border-[#333] bg-[#111]">
+          <div className="flex items-center gap-2">
+            <DollarSign size={16} className="text-[#8A2BE2]" />
+            <span className="text-xs font-mono">TOKENIZED TIKTOK</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-gray-400">Likes</span>
+              <span className="text-xs">{localVideos[currentIndex]?.likes || '0'}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-gray-400">Comments</span>
+              <span className="text-xs">{localVideos[currentIndex]?.comments || '0'}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 

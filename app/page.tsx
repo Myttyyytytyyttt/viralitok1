@@ -4,7 +4,7 @@ import { GlitchLogo } from "@/components/glitch-logo"
 import TikTokCarousel from "@/components/tiktok-carousel"
 import { AlertTriangle, Send, Plus, Menu, X, Twitter } from "lucide-react"
 import TikTokMiniExplorer from "@/components/tiktok-mini-explorer"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import LaunchButton from "@/components/launch-button"
 import { TokenizeModal } from "@/components/tokenize-modal"
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -14,6 +14,23 @@ import TikTokExplorer from "@/components/tiktok-explorer"
 import TokenDetailModal from "@/components/token-detail-modal"
 import { TokenData } from "@/types"
 
+// Función que convierte letras a números aleatoriamente
+const hackerEffect = (text: string, activePositions: {textIndex: number, charIndex: number}[]): string => {
+  const chars = "0123456789";
+  
+  // Solo aplicamos el efecto en las posiciones activas específicas
+  return text.split('').map((char, charIndex) => {
+    // Verificar si esta posición específica está activa
+    const isActive = activePositions.some(pos => 
+      pos.textIndex === -1 && pos.charIndex === charIndex); // -1 es un marcador especial para la iteración actual
+    
+    if (isActive && ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === ' ')) {
+      return chars[Math.floor(Math.random() * chars.length)];
+    }
+    return char;
+  }).join('');
+};
+
 export default function Home() {
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -21,6 +38,83 @@ export default function Home() {
   const [selectedToken, setSelectedToken] = useState<TokenData | null>(null)
   const [isTokenDetailOpen, setIsTokenDetailOpen] = useState(false)
   const { connected } = useWallet()
+
+  // Referencias y estado para el efecto hacker
+  const [hackerTexts, setHackerTexts] = useState<string[]>([]);
+  const originalTexts = useRef<string[]>([
+    "/// VIRALITOK PRICE PREDICTION: $COMING SOON...",
+    "© \"viral content = digital wealth\"",
+    "TOKENIZATION PROTOCOL ENABLED ///",
+    "SOLANA × VIRALITOK",
+    "BUY $VTOK NOW ON PUMP.FUN"
+  ]);
+  
+  // Mantener un registro de qué posiciones están activas para el efecto
+  const [activePositions, setActivePositions] = useState<{textIndex: number, charIndex: number}[]>([]);
+  
+  // Efecto para inicializar los textos
+  useEffect(() => {
+    setHackerTexts([...originalTexts.current]);
+    
+    // Función para seleccionar nuevas posiciones aleatorias
+    const selectNewPositions = () => {
+      const newPositions: {textIndex: number, charIndex: number}[] = [];
+      const maxActivePositions = 4; // Máximo 4 letras cambiando en todo el rodapié
+      
+      // Elegir hasta 4 posiciones aleatorias
+      while (newPositions.length < maxActivePositions) {
+        // Elegir un texto aleatorio
+        const textIndex = Math.floor(Math.random() * originalTexts.current.length);
+        const text = originalTexts.current[textIndex];
+        
+        // Elegir una posición aleatoria dentro de ese texto
+        const charIndex = Math.floor(Math.random() * text.length);
+        const char = text[charIndex];
+        
+        // Solo añadir si es una letra o espacio (no símbolos)
+        if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === ' ') {
+          // Verificar que esta posición no esté ya seleccionada
+          const alreadySelected = newPositions.some(
+            pos => pos.textIndex === textIndex && pos.charIndex === charIndex
+          );
+          
+          if (!alreadySelected) {
+            newPositions.push({ textIndex, charIndex });
+          }
+        }
+      }
+      
+      setActivePositions(newPositions);
+    };
+    
+    // Función para actualizar el efecto hacker
+    const updateHackerEffect = () => {
+      setHackerTexts(originalTexts.current.map((text, textIndex) => {
+        // Filtrar posiciones activas para este texto específico
+        const textActivePositions = activePositions
+          .filter(pos => pos.textIndex === textIndex)
+          // Convertir el índice de texto a -1 para la función hackerEffect
+          .map(pos => ({textIndex: -1, charIndex: pos.charIndex}));
+        
+        // Solo aplicar el efecto si hay posiciones activas para este texto
+        if (textActivePositions.length > 0) {
+          return hackerEffect(text, textActivePositions);
+        }
+        return text;
+      }));
+    };
+    
+    // Temporizador para seleccionar nuevas posiciones cada 3 segundos
+    const positionInterval = setInterval(selectNewPositions, 3000);
+    
+    // Temporizador para actualizar el efecto más frecuentemente (aspecto parpadeante)
+    const effectInterval = setInterval(updateHackerEffect, 100);
+    
+    return () => {
+      clearInterval(positionInterval);
+      clearInterval(effectInterval);
+    };
+  }, [activePositions]);
 
   const handleTokenizeClick = () => {
     if (!connected) {
@@ -235,13 +329,52 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="w-full border-t border-[#333] py-2 px-4 font-mono bg-black">
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs text-gray-500">
-          <div>/// VIRALITOK PRICE PREDICTION: $COMING SOON...</div>
-          <div className="hidden md:block">© "viral content = digital wealth"</div>
-          <div className="hidden md:block">TOKENIZATION PROTOCOL DISABLED ///</div>
+      <footer className="w-full border-t border-[#333] py-2 px-0 font-mono bg-black overflow-hidden">
+        <div className="ticker-container w-full relative overflow-hidden">
+          <div className="ticker-animation flex whitespace-nowrap text-gray-500 text-xs">
+            <div className="ticker-content flex items-center space-x-8 animate-marquee hacker-text">
+              {hackerTexts.map((text, index) => (
+                <span key={index} className="hacker-span">{text}</span>
+              ))}
+            </div>
+            {/* Duplicado para crear una animación continua sin saltos */}
+            <div className="ticker-content flex items-center space-x-8 animate-marquee hacker-text">
+              {hackerTexts.map((text, index) => (
+                <span key={`dup-${index}`} className="hacker-span">{text}</span>
+              ))}
+            </div>
+          </div>
         </div>
       </footer>
+
+      {/* Añadir estilos para la animación del ticker y efecto hacker */}
+      <style jsx global>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+        
+        .ticker-container:hover .animate-marquee {
+          animation-play-state: paused;
+        }
+        
+        .hacker-span {
+          transition: color 0.1s ease;
+        }
+        
+        .hacker-span:hover {
+          color: #4CAF50;
+          text-shadow: 0 0 5px rgba(76, 175, 80, 0.7);
+        }
+      `}</style>
 
       {/* Modal del explorador completo */}
       {isExplorerModalOpen && (

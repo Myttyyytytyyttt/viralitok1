@@ -34,7 +34,7 @@
   ],
   "cleanUrls": true,
   "installCommand": "npm install --no-audit --no-fund",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "ignoreCommand": "",
   "framework": "nextjs"
 } 

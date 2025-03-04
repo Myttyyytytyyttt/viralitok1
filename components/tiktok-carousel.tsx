@@ -2,9 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
-import { DollarSign, ChevronLeft, ChevronRight } from "lucide-react"
+import { DollarSign, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react"
 import { TokenData } from "@/types"
 import LocalVideoPlayer from "./local-video-player"
+import { getTokenMetadata, formatMarketCap, FEATURED_TOKEN_ADDRESSES, TokenMetadata } from "@/services/moralis"
+
+// Función para obtener tokens de la base de datos
+async function fetchTokensFromDatabase() {
+  try {
+    const response = await fetch('/api/tokens');
+    if (!response.ok) {
+      throw new Error('Error al obtener tokens de la base de datos');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error al cargar tokens:', error);
+    return [];
+  }
+}
 
 // Lista de videos locales
 const localVideos = [
@@ -17,7 +32,8 @@ const localVideos = [
     tokenChange: "+12.5%",
     likes: "1.2M",
     comments: "24.5K",
-    creator: "0x1234...5678"
+    creator: "0x1234...5678",
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.vtok // Dirección del token VTOK
   },
   {
     id: 2,
@@ -28,7 +44,8 @@ const localVideos = [
     tokenChange: "+5.2%",
     likes: "458K",
     comments: "12.3K",
-    creator: "0x8765...4321"
+    creator: "0x8765...4321",
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.pump // Dirección del token PUMP
   },
   {
     id: 3,
@@ -39,7 +56,8 @@ const localVideos = [
     tokenChange: "+28.7%",
     likes: "2.4M",
     comments: "56K",
-    creator: "0xabcd...efgh"
+    creator: "0xabcd...efgh",
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.fart // Dirección del otro token
   }
 ];
 
@@ -55,6 +73,19 @@ export default function TikTokCarousel() {
   const [isLoading, setIsLoading] = useState(false)
   const [opacity, setOpacity] = useState(1) // Control de opacidad
   const [initialLoading, setInitialLoading] = useState(false)
+  const [tokenMetadata, setTokenMetadata] = useState<Record<string, TokenMetadata | null>>({})
+  const [isFetching, setIsFetching] = useState(false)
+  const [dbTokens, setDbTokens] = useState<any[]>([]) // Tokens de la base de datos
+  
+  // Cargar tokens de la base de datos al inicio
+  useEffect(() => {
+    const loadDbTokens = async () => {
+      const tokens = await fetchTokensFromDatabase();
+      setDbTokens(tokens);
+    };
+    
+    loadDbTokens();
+  }, []);
   
   // Simulamos tokens a partir de nuestros videos locales
   const featuredTokens = localVideos.map(video => ({
@@ -70,8 +101,112 @@ export default function TikTokCarousel() {
     // Datos adicionales para mostrar en la interfaz
     tokenChange: video.tokenChange,
     likes: video.likes,
-    comments: video.comments
+    comments: video.comments,
+    tokenAddress: video.tokenAddress // Añadimos la dirección del token
   }));
+  
+  // Función para obtener metadatos de los tokens
+  const fetchTokenMetadata = useCallback(async () => {
+    if (isFetching) return; // Evitar múltiples llamadas simultáneas
+    
+    setIsFetching(true);
+    
+    try {
+      const tokenAddresses = localVideos.map(video => video.tokenAddress);
+      const results: Record<string, TokenMetadata | null> = {};
+      
+      // Realizar llamadas en secuencia para evitar límites de API
+      for (const address of tokenAddresses) {
+        if (!address) continue;
+        
+        try {
+          const data = await getTokenMetadata(address);
+          if (data) {
+            results[address] = data;
+          }
+        } catch (error) {
+          console.warn(`No se pudieron obtener metadatos para el token ${address}, usando datos locales`);
+          
+          // Primero buscar en la base de datos
+          const dbToken = dbTokens.find(token => token.address === address);
+          
+          if (dbToken) {
+            // Usar datos de la base de datos
+            results[address] = {
+              mint: address,
+              standard: "solana-nft",
+              name: dbToken.name || "Token local",
+              symbol: dbToken.symbol || "LOCAL",
+              logo: "",
+              decimals: "9",
+              fullyDilutedValue: "1000",
+              totalSupply: "1000000000",
+              totalSupplyFormatted: "1000",
+              metaplex: {
+                metadataUri: "",
+                masterEdition: false,
+                isMutable: true,
+                sellerFeeBasisPoints: 0,
+                updateAuthority: "",
+                primarySaleHappened: 0
+              },
+              links: null,
+              description: dbToken.name || null,
+              percentChange: "+0.00%"
+            };
+          } else {
+            // Buscar en datos locales como respaldo
+            const localData = localVideos.find(video => video.tokenAddress === address);
+            
+            // Crear un metadata simulado si no se encontró en Moralis
+            if (localData) {
+              results[address] = {
+                mint: address,
+                standard: "solana-nft",
+                name: localData.description || "Token local",
+                symbol: localData.tokenPrice.split(' ')[0] || "LOCAL",
+                logo: "",
+                decimals: "9",
+                fullyDilutedValue: "1000",
+                totalSupply: "1000000000",
+                totalSupplyFormatted: "1000",
+                metaplex: {
+                  metadataUri: "",
+                  masterEdition: false,
+                  isMutable: true,
+                  sellerFeeBasisPoints: 0,
+                  updateAuthority: "",
+                  primarySaleHappened: 0
+                },
+                links: null,
+                description: localData.description || null,
+                percentChange: localData.tokenChange || "+0.00%"
+              };
+            }
+          }
+        }
+      }
+      
+      setTokenMetadata(prev => ({...prev, ...results}));
+    } catch (error) {
+      console.error("Error al obtener datos de tokens:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  }, [isFetching, dbTokens]);
+  
+  // Cargar datos de tokens al montar el componente y cada 30 segundos
+  useEffect(() => {
+    // Realizar la primera carga
+    fetchTokenMetadata();
+    
+    // Configurar intervalo para actualizar cada 30 segundos
+    const interval = setInterval(() => {
+      fetchTokenMetadata();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [fetchTokenMetadata]);
   
   // Función para cambiar slide con fade out manual
   const changeSlide = useCallback((index: number) => {
@@ -119,6 +254,15 @@ export default function TikTokCarousel() {
   }, [nextSlide]);
 
   const currentToken = featuredTokens[currentIndex];
+  const currentTokenMetadata = currentToken?.tokenAddress ? tokenMetadata[currentToken.tokenAddress] : null;
+  
+  // Determinar el market cap y el cambio porcentual
+  const marketCap = currentTokenMetadata?.fullyDilutedValue 
+    ? formatMarketCap(currentTokenMetadata.fullyDilutedValue)
+    : "$ --";
+    
+  const percentChange = currentTokenMetadata?.percentChange || "+0.00%";
+  const isPositiveChange = percentChange.startsWith("+");
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
@@ -170,13 +314,15 @@ export default function TikTokCarousel() {
             <div className="flex justify-between items-end">
               <div>
                 <p className="text-sm font-medium">{currentToken?.creator || '@username'}</p>
-                <p className="text-xs text-gray-400 mt-1 line-clamp-2">{currentToken?.name || 'Video description'}</p>
+                <p className="text-xs text-gray-400 mt-1 line-clamp-2">{currentTokenMetadata?.name || currentToken?.name || 'Video description'}</p>
               </div>
               <div className="flex flex-col items-end">
                 <span className="text-xs font-mono bg-[#8A2BE2] px-2 py-1 rounded-sm">
-                  {currentToken?.symbol || '0.00'} SOL
+                  {currentTokenMetadata?.symbol || currentToken?.symbol || '0.00'} 
                 </span>
-                <span className="text-xs text-green-500 mt-1">{localVideos[currentIndex]?.tokenChange || '+0.0%'}</span>
+                <span className={`text-xs mt-1 ${isPositiveChange ? 'text-green-500' : 'text-red-500'}`}>
+                  {percentChange}
+                </span>
               </div>
             </div>
           </div>
@@ -186,16 +332,12 @@ export default function TikTokCarousel() {
         <div className="flex justify-between items-center p-3 border-t border-[#333] bg-[#111]">
           <div className="flex items-center gap-2">
             <DollarSign size={16} className="text-[#8A2BE2]" />
-            <span className="text-xs font-mono">TOKENIZED TIKTOK</span>
+            <span className="text-xs font-mono">MARKET CAP</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-gray-400">Likes</span>
-              <span className="text-xs">{localVideos[currentIndex]?.likes || '0'}</span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-gray-400">Comments</span>
-              <span className="text-xs">{localVideos[currentIndex]?.comments || '0'}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-semibold">{marketCap}</span>
+              <TrendingUp size={14} className={isPositiveChange ? 'text-green-500' : 'text-red-500'} />
             </div>
           </div>
         </div>

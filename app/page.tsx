@@ -134,16 +134,65 @@ export default function Home() {
                 <div className="space-y-1">
                   <h3 className="text-sm font-mono text-[#4CAF50]">TEAM</h3>
                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
-                    <div>• Smart Contracts</div>
-                    <div>• Tokenomics</div>
-                    <div>• Web3 Integration</div>
+                    <div>• Mytyty</div>
+                    <div>• StackToFlow</div>
+                    <div>• v0.</div>
                     <div>• Community</div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-2">
+                <div className="flex flex-col items-start text-xs text-gray-500 pt-2 space-y-2">
                   <div>Powered by</div>
-                  <div className="px-2 py-1 border border-[#333] rounded-sm">CERTIK</div>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Solana */}
+                    <div className="px-2 py-1 border border-[#333] rounded-sm flex items-center gap-1 hover:bg-[#1a1a1a] transition-colors">
+                      <svg className="w-3 h-3" viewBox="0 0 397 311" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M64.6833 237.316L98.2634 271.298C99.5696 272.615 101.286 273.44 103.116 273.647C104.946 273.855 106.795 273.433 108.351 272.449L226.011 196.278" stroke="#9945FF" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M226.011 115.029L108.351 38.8581C106.795 37.8745 104.946 37.4528 103.116 37.6599C101.286 37.867 99.5696 38.6927 98.2634 40.0093L64.6833 73.9909" stroke="#19FB9B" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M64.6836 73.9912V237.316" stroke="#19FB9B" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M283.366 38.8581L165.706 115.029L283.366 191.2C284.923 192.184 286.772 192.605 288.602 192.398C290.432 192.191 292.148 191.365 293.454 190.049L327.034 156.067" stroke="#9945FF" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M327.034 156.067V40.0093C327.034 38.1365 326.295 36.34 324.981 35.0159C323.666 33.6918 321.884 32.9478 320.025 32.9478H297.997" stroke="#9945FF" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-purple-400">Solana</span>
+                    </div>
+                    
+                    {/* PumpFun */}
+                    <div className="px-2 py-1 border border-[#333] rounded-sm flex items-center gap-1 hover:bg-[#1a1a1a] transition-colors">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L4 6V12C4 17.5 7.8 22 12 22C16.2 22 20 17.5 20 12V6L12 2Z" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-orange-400">PumpFun</span>
+                    </div>
+                    
+                    {/* MoralisAPI */}
+                    <div className="px-2 py-1 border border-[#333] rounded-sm flex items-center gap-1 hover:bg-[#1a1a1a] transition-colors">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3Z" stroke="#3498DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 8V16" stroke="#3498DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 12H16" stroke="#3498DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-blue-400">MoralisAPI</span>
+                    </div>
+                    
+                    {/* Supabase */}
+                    <div className="px-2 py-1 border border-[#333] rounded-sm flex items-center gap-1 hover:bg-[#1a1a1a] transition-colors">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 14V10C21 8.93913 20.5786 7.92172 19.8284 7.17157C19.0783 6.42143 18.0609 6 17 6H7C5.93913 6 4.92172 6.42143 4.17157 7.17157C3.42143 7.92172 3 8.93913 3 10V14C3 15.0609 3.42143 16.0783 4.17157 16.8284C4.92172 17.5786 5.93913 18 7 18H17C18.0609 18 19.0783 17.5786 19.8284 16.8284C20.5786 16.0783 21 15.0609 21 14Z" stroke="#3ECF8E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 10V14" stroke="#3ECF8E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 10V14" stroke="#3ECF8E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M16 10V14" stroke="#3ECF8E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-green-400">Supabase</span>
+                    </div>
+                    
+                    {/* Vercel */}
+                    <div className="px-2 py-1 border border-[#333] rounded-sm flex items-center gap-1 hover:bg-[#1a1a1a] transition-colors">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L22 20H2L12 2Z" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-white">Vercel</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

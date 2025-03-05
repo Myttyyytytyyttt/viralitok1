@@ -85,22 +85,6 @@ const generateVanityAddress = async (
 // Servicios IPFS alternativos
 const IPFS_SERVICES = [
   {
-    name: "IPFS Local",
-    url: "/api/ipfs", // Endpoint local como primera opción (funciona en desarrollo y producción)
-    method: "POST",
-    getFormData: (formData: FormData) => formData,
-    processResponse: async (response: Response) => {
-      try {
-        const data = await response.json();
-        console.log("Respuesta IPFS Local:", data);
-        return data;
-      } catch (e) {
-        console.error("Error al procesar respuesta de IPFS Local:", e);
-        throw e;
-      }
-    }
-  },
-  {
     name: "pump.fun",
     url: "https://pump.fun/api/ipfs",
     method: "POST",
@@ -110,9 +94,25 @@ const IPFS_SERVICES = [
         const text = await response.text();
         console.log("Respuesta IPFS pump.fun (texto):", text);
         return JSON.parse(text);
-      } catch (e) {
-        console.error("Error parsing pump.fun response:", e);
-        throw new Error(`Failed to parse IPFS response: ${e.message}`);
+      } catch (error: any) {
+        console.error("Error parsing pump.fun response:", error);
+        throw new Error(`Failed to parse IPFS response: ${error?.message || 'Unknown error'}`);
+      }
+    }
+  },
+  {
+    name: "IPFS Local",
+    url: "/api/ipfs", // Endpoint local como fallback
+    method: "POST",
+    getFormData: (formData: FormData) => formData,
+    processResponse: async (response: Response) => {
+      try {
+        const data = await response.json();
+        console.log("Respuesta IPFS Local:", data);
+        return data;
+      } catch (error: any) {
+        console.error("Error al procesar respuesta de IPFS Local:", error);
+        throw error;
       }
     }
   }
@@ -555,9 +555,34 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       if (websiteUrl) formData.append("website", websiteUrl);
       formData.append("showName", "true");
       
-      // 2. Subir metadatos e imagen a IPFS usando múltiples servicios
-      console.log("Uploading token metadata to IPFS...");
-      const metadataResponseJSON = await uploadToIPFS(formData, setErrorMessage);
+      // 2. Subir metadatos e imagen a IPFS
+      // IMPORTANTE: Primero intentar directamente con pump.fun como en el ejemplo oficial
+      let metadataResponseJSON;
+      try {
+        console.log("Intentando subir a pump.fun directamente...");
+        const metadataResponse = await fetch("https://pump.fun/api/ipfs", {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (metadataResponse.ok) {
+          const responseText = await metadataResponse.text();
+          console.log("Respuesta pump.fun (texto):", responseText);
+          metadataResponseJSON = JSON.parse(responseText);
+          console.log("IPFS upload successful (pump.fun):", metadataResponseJSON);
+        } else {
+          // Si falla, intentar con nuestro sistema de fallback
+          console.log("Fallo en pump.fun, usando fallback...");
+          metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
+        }
+      } catch (error) {
+        console.error("Error con pump.fun directo:", error);
+        // Intentar con nuestro sistema de fallback
+        console.log("Error con pump.fun, usando fallback...");
+        metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
+      }
+      
+      console.log("Metadata IPFS response:", metadataResponseJSON);
       
       if (!metadataResponseJSON.metadataUri) {
         throw new Error("No se recibió URI de metadatos desde IPFS");
@@ -567,14 +592,14 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       const imageUrl = metadataResponseJSON.imageUrl || metadataResponseJSON.metadata?.image || '';
       console.log("URL de imagen capturada:", imageUrl);
       
-      // 3. Obtener la transacción de creación del token
+      // 3. Obtener la transacción de creación del token siguiendo EXACTAMENTE el ejemplo oficial
       console.log("Getting token creation transaction...");
       const createTxPayload = {
         "publicKey": publicKey.toString(),
         "action": "create",
         "tokenMetadata": {
-          name: metadataResponseJSON.metadata.name,
-          symbol: metadataResponseJSON.metadata.symbol,
+          name: metadataResponseJSON.metadata?.name || tokenName,
+          symbol: metadataResponseJSON.metadata?.symbol || tokenSymbol,
           uri: metadataResponseJSON.metadataUri
         },
         "mint": mintKeypair.publicKey.toString(),
@@ -592,13 +617,13 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         console.log("Solicitando transacción a PumpPortal...");
         
         // Hacer una única solicitud simple sin autenticación, como en el ejemplo
-        const response = await retryFetch("https://pumpportal.fun/api/trade-local", {
+        const response = await fetch("https://pumpportal.fun/api/trade-local", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           body: JSON.stringify(createTxPayload)
-        }, 2);
+        });
         
         // Verificar si la respuesta es exitosa
         if (!response.ok) {

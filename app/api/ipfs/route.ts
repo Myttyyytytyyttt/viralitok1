@@ -7,6 +7,7 @@ declare global {
     type: string;
     content: Uint8Array;
     uri: string;
+    publicUrl?: string;
   }>;
 }
 
@@ -27,9 +28,18 @@ function generateSimulatedCID(hash: string): string {
 
 // Función para obtener la URL base de la aplicación
 function getBaseUrl(request: NextRequest): string {
-  // Intentar obtener el host de la solicitud
   const host = request.headers.get('host') || 'localhost:3000';
   const protocol = host.includes('localhost') ? 'http' : 'https';
+  
+  // En producción, usamos el dominio real
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  
   return `${protocol}://${host}`;
 }
 
@@ -39,7 +49,7 @@ export async function POST(request: NextRequest) {
     
     // Procesar el FormData de la solicitud
     const formData = await request.formData();
-    const imageFile = formData.get('image') as File | null;
+    const imageFile = formData.get('file') as File | null; // Usar 'file' en lugar de 'image'
     const name = formData.get('name') as string;
     const symbol = formData.get('symbol') as string;
     const description = formData.get('description') as string;
@@ -49,6 +59,7 @@ export async function POST(request: NextRequest) {
     
     // Obtener la URL base
     const baseUrl = getBaseUrl(request);
+    console.log('URL base para assets:', baseUrl);
     
     // Crear objeto de metadata
     const metadata: any = {
@@ -63,7 +74,7 @@ export async function POST(request: NextRequest) {
     let imageURI = null;
     
     if (imageFile) {
-      console.log('Procesando imagen:', imageFile.name);
+      console.log('Procesando imagen:', imageFile.name, 'tipo:', imageFile.type);
       const buffer = Buffer.from(await imageFile.arrayBuffer());
       const imageHash = generateContentHash(buffer);
       imageCID = generateSimulatedCID(imageHash);
@@ -72,16 +83,20 @@ export async function POST(request: NextRequest) {
       const fileExtension = imageFile.name.split('.').pop() || 'png';
       const fileName = `${imageCID}.${fileExtension}`;
       
+      // URL pública para la imagen a través de nuestro API
+      const publicUrl = `${baseUrl}/api/ipfs/asset/${imageCID}`;
+      imageURI = publicUrl;
+      
       // Almacenar en memoria global
       global.memoryStorage[imageCID] = {
         type: imageFile.type,
         content: new Uint8Array(buffer),
-        uri: `/api/ipfs/asset/${imageCID}`
+        uri: `/api/ipfs/asset/${imageCID}`,
+        publicUrl
       };
       
-      // URL pública para la imagen a través de nuestro API
-      imageURI = `${baseUrl}/api/ipfs/asset/${imageCID}`;
-      metadata.image = imageURI;
+      metadata.image = publicUrl;
+      console.log('Imagen procesada:', { imageCID, publicUrl });
     }
     
     // Generar metadatos JSON
@@ -89,27 +104,31 @@ export async function POST(request: NextRequest) {
     const metadataHash = generateContentHash(metadataBuffer);
     const metadataCID = generateSimulatedCID(metadataHash);
     
+    // URL pública para la metadata
+    const metadataPublicUrl = `${baseUrl}/api/ipfs/asset/${metadataCID}`;
+    
     // Almacenar metadata en memoria global
     global.memoryStorage[metadataCID] = {
       type: 'application/json',
       content: new Uint8Array(metadataBuffer),
-      uri: `/api/ipfs/asset/${metadataCID}`
+      uri: `/api/ipfs/asset/${metadataCID}`,
+      publicUrl: metadataPublicUrl
     };
-    
-    // URL pública para la metadata
-    const metadataURI = `${baseUrl}/api/ipfs/asset/${metadataCID}`;
     
     console.log('Metadata y assets generados con éxito:', {
       metadataCID,
-      metadataURI,
-      imageCID
+      metadataURI: metadataPublicUrl,
+      imageCID,
+      imageURI
     });
     
     // Construir respuesta similar a la que devolvería pump.fun
     return NextResponse.json({
       success: true,
-      metadataUri: metadataURI,
+      metadataUri: metadataPublicUrl,
       imageCid: imageCID,
+      imageUrl: imageURI,
+      metadata: metadata, // Incluir la metadata completa para facilitar el acceso
       metadataCid: metadataCID
     });
     

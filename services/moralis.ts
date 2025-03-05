@@ -40,61 +40,137 @@ const tokenCache: Record<string, {
 }> = {};
 
 /**
- * Obtiene los metadatos de un token desde la API de Moralis
+ * Versión hardcodeada de getTokenMetadata para evitar llamadas a la API
  * @param tokenAddress Dirección del token en la cadena Solana
- * @returns Metadatos del token o null si hay un error
+ * @returns Metadatos del token simulados
  */
 export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata | null> {
-  try {
-    const response = await fetch(
-      `https://solana-gateway.moralis.io/token/mainnet/${tokenAddress}/metadata`,
-      {
-        headers: {
-          'accept': 'application/json',
-          'X-API-Key': MORALIS_API_KEY
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error fetching token metadata: ${response.status}`);
+  console.log("Usando datos hardcodeados para", tokenAddress);
+  
+  // Datos hardcodeados para los tokens principales
+  const hardcodedData: Record<string, TokenMetadata> = {
+    // VTOK
+    "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK": {
+      mint: "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK",
+      standard: "spl-token",
+      name: "VIRAL Token",
+      symbol: "VTOK",
+      logo: "https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q2ETH5ZXegYs",
+      decimals: "9",
+      metaplex: {
+        metadataUri: "https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q2ETH5ZXegYs",
+        masterEdition: false,
+        isMutable: true,
+        sellerFeeBasisPoints: 500,
+        updateAuthority: "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK",
+        primarySaleHappened: 0
+      },
+      fullyDilutedValue: "14528900",
+      totalSupply: "10000000000000000",
+      totalSupplyFormatted: "10000000",
+      links: null,
+      description: "Tokenized TikTok Videos on Solana",
+      percentChange: "+15.42%"
+    },
+    
+    // PUMP
+    "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok": {
+      mint: "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok",
+      standard: "spl-token",
+      name: "PUMP",
+      symbol: "PUMP",
+      logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PUMPvEXAQFq949wHmBN1hNJBJQZZ7M61NebvtYrKLCf/logo.png",
+      decimals: "9",
+      metaplex: {
+        metadataUri: "https://arweave.net/rK9UHZkCTg3Yq-5nVKuQf8FS2xAARWnM-yhA5eLhSs8",
+        masterEdition: false,
+        isMutable: true,
+        sellerFeeBasisPoints: 0,
+        updateAuthority: "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok",
+        primarySaleHappened: 0
+      },
+      fullyDilutedValue: "25467800",
+      totalSupply: "1000000000000000",
+      totalSupplyFormatted: "1000000",
+      links: null,
+      description: "The most popular meme token on Solana",
+      percentChange: "+8.25%"
+    },
+    
+    // FART
+    "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok": {
+      mint: "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok",
+      standard: "spl-token",
+      name: "FART",
+      symbol: "FART",
+      logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/FARTKjSo8Z7JVwxUQqY5Q8JYdZRMZLJjYCh9q4huY9yx/logo.png",
+      decimals: "9",
+      metaplex: {
+        metadataUri: "https://arweave.net/sYfZ8ccFMQqTA9HjH3ZbG4LnegWyFKKMqzFnQnJxZj4",
+        masterEdition: false,
+        isMutable: true,
+        sellerFeeBasisPoints: 0,
+        updateAuthority: "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok",
+        primarySaleHappened: 0
+      },
+      fullyDilutedValue: "6752100",
+      totalSupply: "1000000000000000",
+      totalSupplyFormatted: "1000000",
+      links: null,
+      description: "Just a stinky meme token on Solana",
+      percentChange: "+4.62%"
     }
-
-    const data: TokenMetadata = await response.json();
+  };
+  
+  // Generamos datos aleatorios para tokens desconocidos
+  if (hardcodedData[tokenAddress]) {
+    // Simulamos cambios aleatorios en el precio cada vez
+    const priceChange = Math.random() < 0.7 
+      ? (Math.random() * 5) + 2 // 70% de las veces sube entre 2% y 7%
+      : -(Math.random() * 3); // 30% de las veces baja hasta 3%
     
-    // Guardar los datos en caché para calcular cambios porcentuales
-    const previousData = tokenCache[tokenAddress];
-    let percentChange = "0.00%";
+    const formattedChange = priceChange >= 0 
+      ? `+${priceChange.toFixed(2)}%` 
+      : `${priceChange.toFixed(2)}%`;
     
-    if (previousData && previousData.data.fullyDilutedValue) {
-      const prevValue = parseFloat(previousData.data.fullyDilutedValue);
-      const currentValue = parseFloat(data.fullyDilutedValue);
-      
-      if (!isNaN(prevValue) && !isNaN(currentValue) && prevValue > 0) {
-        const changePercent = ((currentValue - prevValue) / prevValue) * 100;
-        percentChange = changePercent >= 0 
-          ? `+${changePercent.toFixed(2)}%` 
-          : `${changePercent.toFixed(2)}%`;
-      }
-    }
-    
-    tokenCache[tokenAddress] = {
-      data,
-      timestamp: Date.now(),
-      previousValue: previousData?.data.fullyDilutedValue,
-      percentChange
-    };
-    
-    // Añadir el cambio porcentual a los datos
     return {
-      ...data,
-      percentChange
-    } as TokenMetadata & { percentChange: string };
+      ...hardcodedData[tokenAddress],
+      percentChange: formattedChange
+    };
+  } else {
+    // Para tokens desconocidos, generamos datos genéricos
+    const tokenSymbol = tokenAddress.substring(0, 4).toUpperCase();
+    const randomPrice = (Math.random() * 10000) + 1000;
+    const randomChange = Math.random() < 0.6 
+      ? (Math.random() * 12) 
+      : -(Math.random() * 8);
     
-  } catch (error) {
-    console.error("Error en Moralis API:", error);
-    // En lugar de retornar null, relanzamos la excepción para que sea manejada por el componente
-    throw error;
+    const formattedChange = randomChange >= 0 
+      ? `+${randomChange.toFixed(2)}%` 
+      : `${randomChange.toFixed(2)}%`;
+    
+    return {
+      mint: tokenAddress,
+      standard: "spl-token",
+      name: `Token ${tokenSymbol}`,
+      symbol: tokenSymbol,
+      logo: "",
+      decimals: "9",
+      metaplex: {
+        metadataUri: "",
+        masterEdition: false,
+        isMutable: true,
+        sellerFeeBasisPoints: 0,
+        updateAuthority: tokenAddress,
+        primarySaleHappened: 0
+      },
+      fullyDilutedValue: randomPrice.toString(),
+      totalSupply: "1000000000000000",
+      totalSupplyFormatted: "1000000",
+      links: null,
+      description: "Generated token data",
+      percentChange: formattedChange
+    };
   }
 }
 

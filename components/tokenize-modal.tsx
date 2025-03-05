@@ -151,7 +151,7 @@ const uploadToIPFS = async (formData: FormData, updateStatus?: (status: string) 
   for (const service of IPFS_SERVICES) {
     try {
       if (updateStatus) {
-        updateStatus(`Intentando subir a IPFS usando ${service.name}...`);
+        updateStatus(`Attempting to upload to ${service.name}...`);
       }
       console.log(`Intentando subir a IPFS usando ${service.name}...`);
       
@@ -176,12 +176,12 @@ const uploadToIPFS = async (formData: FormData, updateStatus?: (status: string) 
       
       if (result && result.success && result.metadataUri) {
         if (updateStatus) {
-          updateStatus(`Datos subidos exitosamente a ${service.name}`);
+          updateStatus(`Successfully uploaded data to ${service.name}`);
         }
         return result;
       } else {
         console.error(`Respuesta de ${service.name} no contiene los datos esperados:`, result);
-        lastError = new Error(`Respuesta incompleta de ${service.name}`);
+        lastError = new Error(`Incomplete response from ${service.name}`);
         continue;
       }
     } catch (error) {
@@ -238,6 +238,12 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
   const [isGeneratingVanityAddress, setIsGeneratingVanityAddress] = useState(false)
   const [vanityStatus, setVanityStatus] = useState<string | null>(null)
   const [vanityAddressGenerated, setVanityAddressGenerated] = useState(false)
+  
+  // Estados para el formulario
+  const [loadingMessage, setLoadingMessage] = useState<string>("")
+  
+  // Estados para CAPTCHA
+  const [captchaCode, setCaptchaCode] = useState("")
   
   // Función para cerrar el modal de manera segura
   const handleClose = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -562,23 +568,27 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       // 2. Subir metadatos e imagen a IPFS a través de nuestro proxy
       console.log("Uploading token metadata to IPFS via proxy...");
       
+      // Cambiar mensaje de estado a inglés y mostrar como carga (no error)
+      setLoadingMessage("Uploading token metadata and images...");
+      
       // Intentar con nuestro sistema que usa proxies
-      const metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
+      const metadataResponseJSON = await uploadToIPFS(formData, (status) => setLoadingMessage(status));
       
       console.log("Metadata IPFS response:", metadataResponseJSON);
       
       if (!metadataResponseJSON.metadataUri) {
-        throw new Error("No se recibió URI de metadatos desde IPFS");
+        throw new Error("No metadata URI received from IPFS");
       }
       
       // Guardar la URL de la imagen para usarla más tarde - comprobar todos los posibles campos
       const imageUrl = metadataResponseJSON.imageUrl || 
-                      metadataResponseJSON.image || 
-                      (metadataResponseJSON.metadata && metadataResponseJSON.metadata.image) || 
-                      '';
+                     metadataResponseJSON.image || 
+                     (metadataResponseJSON.metadata && metadataResponseJSON.metadata.image) || 
+                     '';
       console.log("URL de imagen capturada:", imageUrl);
       
       // 3. Obtener la transacción de creación del token
+      setLoadingMessage("Creating token transaction...");
       console.log("Getting token creation transaction...");
       const createTxPayload = {
         "publicKey": publicKey.toString(),
@@ -601,6 +611,7 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       // Usar nuestro proxy para comunicarse con PumpPortal
       try {
         console.log("Solicitando transacción a PumpPortal a través del proxy...");
+        setLoadingMessage("Requesting transaction from PumpPortal...");
         
         // Hacer la solicitud a través de nuestro proxy
         const response = await fetch("/api/proxy/pump-portal", {
@@ -615,11 +626,12 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Error en respuesta de API (${response.status}):`, errorText);
-          throw new Error(`Error al obtener transacción: ${response.status} - ${errorText}`);
+          throw new Error(`Error obtaining transaction: ${response.status} - ${errorText}`);
         }
         
         // Obtener los datos binarios directamente
         console.log("Obteniendo datos binarios de la transacción...");
+        setLoadingMessage("Processing transaction data...");
         const txData = await response.arrayBuffer();
         
         // Verificar si los datos recibidos son válidos
@@ -630,6 +642,7 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         
         // Convertir a Uint8Array para deserializar
         console.log("Signing transaction...");
+        setLoadingMessage("Preparing to sign transaction...");
         const txUint8Array = new Uint8Array(txData);
         console.log("Tamaño de datos TX:", txData.byteLength, "bytes");
         console.log("TX bytes (primeros 20):", Array.from(txUint8Array.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' '));
@@ -644,25 +657,29 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
           const errorMessage = deserializeError instanceof Error 
             ? deserializeError.message 
             : "Error desconocido al deserializar";
-          throw new Error(`Error al deserializar transacción: ${errorMessage}`);
+          throw new Error(`Error deserializing transaction: ${errorMessage}`);
         }
         
         // Firmar con ambas claves, primero el mintKeypair
         console.log("Firmando transacción con mintKeypair...");
+        setLoadingMessage("Signing transaction with mintKeypair...");
         tx.sign([mintKeypair]);
         
         // Luego firmar con la wallet del usuario
         console.log("Firmando transacción con wallet del usuario...");
+        setLoadingMessage("Please sign transaction with your wallet...");
         const signedTx = await signTransaction(tx);
         
         // Enviar la transacción a la red
         console.log("Enviando transacción a Solana...");
+        setLoadingMessage("Sending transaction to Solana network...");
         const signature = await connection.sendRawTransaction(signedTx.serialize(), {
           skipPreflight: true,
           maxRetries: 3
         });
         
         console.log("Transaction enviada con éxito. Signature:", signature);
+        setLoadingMessage("Transaction sent! Waiting for confirmation...");
         
         // Confirmar la transacción para asegurar que se complete
         console.log("Esperando confirmación de la transacción...");
@@ -675,6 +692,7 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         }
         
         console.log("Transaction confirmada correctamente");
+        setLoadingMessage("Transaction confirmed successfully!");
         setTxSignature(signature);
         setTokenAddress(mintKeypair.publicKey.toString());
         
@@ -711,18 +729,21 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         
         // 7. Avanzar al paso de éxito
         setIsCreatingToken(false);
+        setLoadingMessage("");
         setStep(3);
         
       } catch (error) {
         console.error("Error creating token:", error);
         setErrorMessage(error instanceof Error ? error.message : "Failed to create token. Please try again.");
         setIsCreatingToken(false);
+        setLoadingMessage("");
       }
       
     } catch (error) {
       console.error("Error preparing token creation:", error);
       setErrorMessage(error instanceof Error ? error.message : "Failed to prepare token creation. Please try again.");
       setIsCreatingToken(false);
+      setLoadingMessage("");
     }
   };
   

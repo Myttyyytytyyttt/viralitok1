@@ -205,18 +205,33 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
             )}
             
             <div className="w-16 h-16 bg-[#111] rounded-sm relative flex-shrink-0">
-              {/* Usar la imagen del token si está disponible, o el placeholder si no */}
-              <Image 
-                src={token.imageUrl || "/placeholder.svg"} 
-                alt={token.name} 
-                fill 
-                className="object-cover" 
-                style={{
-                  transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'transform 0.5s ease-in-out',
-                  animation: isNewToken ? 'scale 2s infinite' : 'none',
-                }}
-              />
+              {/* Comprobar si es una URL de IPFS y mostrarla sin optimizar */}
+              {token.imageUrl && (token.imageUrl.includes('ipfs.io') || token.imageUrl.includes('Qm')) ? (
+                <Image 
+                  src={token.imageUrl.startsWith('https://ipfs.io') ? token.imageUrl : `https://ipfs.io/ipfs/${token.imageUrl.match(/Qm[a-zA-Z0-9]+/)?.[0] || ''}`}
+                  alt={token.name} 
+                  fill 
+                  unoptimized={true}
+                  className="object-cover" 
+                  style={{
+                    transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'transform 0.5s ease-in-out',
+                    animation: isNewToken ? 'scale 2s infinite' : 'none',
+                  }}
+                />
+              ) : (
+                <Image 
+                  src={token.imageUrl || "/placeholder.svg"} 
+                  alt={token.name} 
+                  fill 
+                  className="object-cover" 
+                  style={{
+                    transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'transform 0.5s ease-in-out',
+                    animation: isNewToken ? 'scale 2s infinite' : 'none',
+                  }}
+                />
+              )}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-6 h-6 rounded-full border border-[#333] flex items-center justify-center text-xs">
                   ▶

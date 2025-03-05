@@ -13,6 +13,59 @@ interface TokenData {
   imageUrl?: string;
 }
 
+// Función para asegurar que siempre guardemos URLs de IPFS directas
+function normalizeImageUrl(url: string | undefined): string {
+  if (!url) return '';
+  
+  // Si ya es una URL de IPFS directa, la devolvemos
+  if (url.startsWith('https://ipfs.io/ipfs/')) {
+    return url;
+  }
+  
+  // Si es una URL de nuestro proxy de IPFS, convertirla a URL directa de IPFS
+  const proxyMatch = url.match(/\/api\/ipfs\/asset\/(Qm[a-zA-Z0-9]+)/);
+  if (proxyMatch && proxyMatch[1]) {
+    return `https://ipfs.io/ipfs/${proxyMatch[1]}`;
+  }
+  
+  // Buscar cualquier patrón de CID de IPFS en la URL
+  const ipfsMatch = url.match(/ipfs\/([a-zA-Z0-9]+)/);
+  if (ipfsMatch && ipfsMatch[1]) {
+    return `https://ipfs.io/ipfs/${ipfsMatch[1]}`;
+  }
+  
+  // Si es una URL de viralitok o similar, puede contener un CID en el path
+  const vercelMatch = url.match(/viralitok[^\/]+\/[^\/]+\/[^\/]+\/(Qm[a-zA-Z0-9]+)/);
+  if (vercelMatch && vercelMatch[1]) {
+    return `https://ipfs.io/ipfs/${vercelMatch[1]}`;
+  }
+  
+  // Si es una URL de nuestra API local pero contiene metadata de pump.fun, extraer imagen de ahí
+  if (url.includes('pump.fun') || url.includes('metadata') || url.includes('image')) {
+    // Intentar extraer la URL de la imagen desde metadata
+    try {
+      // Si parece ser un JSON, intentar parsearlo
+      if (url.includes('{') && url.includes('}')) {
+        const metadata = JSON.parse(url);
+        if (metadata.image && metadata.image.startsWith('https://ipfs.io/ipfs/')) {
+          return metadata.image;
+        }
+      }
+    } catch (e) {
+      // No es JSON, ignorar
+    }
+  }
+  
+  // Si no pudimos extraer nada, pero la URL contiene un CID de IPFS, usarlo
+  const cidMatch = url.match(/(Qm[a-zA-Z0-9]{44,})/);
+  if (cidMatch && cidMatch[1]) {
+    return `https://ipfs.io/ipfs/${cidMatch[1]}`;
+  }
+  
+  // Devolver la URL original si no pudimos normalizarla
+  return url;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const tokenData: TokenData = await request.json()
@@ -35,7 +88,8 @@ export async function POST(request: NextRequest) {
           creator: tokenData.creator,
           timestamp: tokenData.timestamp,
           signature: tokenData.signature,
-          image_url: tokenData.imageUrl
+          // Normalizar URL para asegurar que siempre sea una URL de IPFS directa
+          image_url: normalizeImageUrl(tokenData.imageUrl)
         }
       ])
       .select()

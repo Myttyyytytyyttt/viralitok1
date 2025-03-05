@@ -28,19 +28,8 @@ function generateSimulatedCID(hash: string): string {
 
 // Función para obtener la URL base de la aplicación
 function getBaseUrl(request: NextRequest): string {
-  const host = request.headers.get('host') || 'localhost:3000';
-  const protocol = host.includes('localhost') ? 'http' : 'https';
-  
-  // En producción, usamos el dominio real
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
-  }
-  
-  return `${protocol}://${host}`;
+  // Usar directamente la URL del sitio desplegado para producción
+  return "https://www.viralfun.tv";
 }
 
 export async function POST(request: NextRequest) {

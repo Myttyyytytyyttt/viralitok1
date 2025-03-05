@@ -39,6 +39,14 @@ const tokenCache: Record<string, {
   percentChange?: string;
 }> = {};
 
+// URLs de logos locales para tokens (como respaldo)
+const TOKEN_LOGOS = {
+  "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK": "/token-logos/viral-logo.png", // VIRAL
+  "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok": "/token-logos/pump-logo.png", // PUMP
+  "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok": "/token-logos/fart-logo.png", // FART
+  "default": "/token-logos/default-token.png" // Logo por defecto
+};
+
 /**
  * Versión hardcodeada de getTokenMetadata para evitar llamadas a la API
  * @param tokenAddress Dirección del token en la cadena Solana
@@ -55,7 +63,7 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       standard: "spl-token",
       name: "VIRAL Token",
       symbol: "VTOK",
-      logo: "https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q2ETH5ZXegYs",
+      logo: TOKEN_LOGOS["5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK"],
       decimals: "9",
       metaplex: {
         metadataUri: "https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q2ETH5ZXegYs",
@@ -79,7 +87,7 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       standard: "spl-token",
       name: "PUMP",
       symbol: "PUMP",
-      logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PUMPvEXAQFq949wHmBN1hNJBJQZZ7M61NebvtYrKLCf/logo.png",
+      logo: TOKEN_LOGOS["7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok"],
       decimals: "9",
       metaplex: {
         metadataUri: "https://arweave.net/rK9UHZkCTg3Yq-5nVKuQf8FS2xAARWnM-yhA5eLhSs8",
@@ -103,7 +111,7 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       standard: "spl-token",
       name: "FART",
       symbol: "FART",
-      logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/FARTKjSo8Z7JVwxUQqY5Q8JYdZRMZLJjYCh9q4huY9yx/logo.png",
+      logo: TOKEN_LOGOS["GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok"],
       decimals: "9",
       metaplex: {
         metadataUri: "https://arweave.net/sYfZ8ccFMQqTA9HjH3ZbG4LnegWyFKKMqzFnQnJxZj4",
@@ -154,7 +162,7 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       standard: "spl-token",
       name: `Token ${tokenSymbol}`,
       symbol: tokenSymbol,
-      logo: "",
+      logo: TOKEN_LOGOS.default,
       decimals: "9",
       metaplex: {
         metadataUri: "",

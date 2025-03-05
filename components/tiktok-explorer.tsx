@@ -243,7 +243,7 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
             })
           ) : (
             <div className="col-span-3 text-center py-10 text-gray-500">
-              No se encontraron VIRALITOKS que coincidan con tu búsqueda.
+              We didn't found any VIRAL atm.
             </div>
           )}
         </div>

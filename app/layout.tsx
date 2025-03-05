@@ -7,8 +7,8 @@ import ClientLayout from "./client-layout"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Viralitok - Tokenize Your Viral TikToks",
-  description: "Turn your viral TikToks into tradable tokens",
+  title: "ViralFun - Tokenize Anything Viral",
+  description: "Turn something viral into tradable tokens",
 }
 
 export default function RootLayout({

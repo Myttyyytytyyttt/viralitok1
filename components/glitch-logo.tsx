@@ -30,7 +30,7 @@ export function GlitchLogo({ small = false }: GlitchLogoProps) {
           : "0 0 3px cyan, 0 0 5px magenta",
       }}
     >
-      Viralitok
+      VIRALFUN.TV
     </h1>
   )
 }

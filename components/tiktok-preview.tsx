@@ -40,7 +40,7 @@ export default function TikTokPreview() {
       </div>
 
       <div className="p-3 text-center bg-[#111] text-sm font-mono">
-        <span className="text-[#8A2BE2]">FEATURED</span> VIRALITOK
+        <span className="text-[#8A2BE2]">FEATURED</span> VIRALS
       </div>
     </div>
   )

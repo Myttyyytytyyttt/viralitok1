@@ -42,11 +42,11 @@ export default function Home() {
   // Referencias y estado para el efecto hacker
   const [hackerTexts, setHackerTexts] = useState<string[]>([]);
   const originalTexts = useRef<string[]>([
-    "/// VIRALITOK PRICE PREDICTION: $COMING SOON...",
+    "/// VIRAL TOKEN PRICE PREDICTION: $COMING SOON...",
     "© \"viral content = digital wealth\"",
     "TOKENIZATION PROTOCOL ENABLED ///",
-    "SOLANA × VIRALITOK",
-    "BUY $VTOK NOW ON PUMP.FUN"
+    "SOLANA × VIRALFUN",
+    "BUY $VIRAL NOW ON PUMP.FUN"
   ]);
   
   // Mantener un registro de qué posiciones están activas para el efecto
@@ -179,7 +179,7 @@ export default function Home() {
           {/* Explorer Section (Full width on mobile, left panel on desktop) */}
           <div className="w-full md:w-80 border-r border-[#333] p-4 flex flex-col gap-4 overflow-y-auto">
             <div className="flex justify-between items-center">
-              <h2 className="text-sm font-mono">EXPLORE VIRALITOKS</h2>
+              <h2 className="text-sm font-mono">EXPLORE VIRAL</h2>
               <button 
                 onClick={() => setIsExplorerModalOpen(true)}
                 className="px-3 py-1 text-xs border border-[#333] rounded-sm hover:bg-[#111] transition">
@@ -320,7 +320,7 @@ export default function Home() {
               </button>
               <button className="w-full py-2 border border-[#333] hover:bg-[#111] transition flex items-center justify-center gap-2 rounded-sm text-sm">
                 <a href="https://pump.fun/token/vtok" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
-                  BUY $VTOK
+                  BUY $VIRAL
                 </a>
               </button>
             </div>
@@ -381,7 +381,7 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-black border border-[#333] rounded-md w-full max-w-4xl relative max-h-[90vh] flex flex-col">
             <div className="border-b border-[#333] p-4 flex justify-between items-center">
-              <h3 className="text-lg font-semibold tracking-wide">EXPLORE ALL VIRALITOKS</h3>
+              <h3 className="text-lg font-semibold tracking-wide">EXPLORE ALL VIRAL</h3>
               <button
                 onClick={() => setIsExplorerModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#222]"

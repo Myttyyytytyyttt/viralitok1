@@ -82,7 +82,42 @@ const generateVanityAddress = async (
   return null; // No se encontró en el tiempo límite
 };
 
-// Función para reintentar solicitudes fetch con backoff exponencial
+// Servicios IPFS alternativos
+const IPFS_SERVICES = [
+  {
+    name: "IPFS Local",
+    url: "/api/ipfs", // Endpoint local como primera opción (funciona en desarrollo y producción)
+    method: "POST",
+    getFormData: (formData: FormData) => formData,
+    processResponse: async (response: Response) => {
+      try {
+        const data = await response.json();
+        console.log("Respuesta IPFS Local:", data);
+        return data;
+      } catch (e) {
+        console.error("Error al procesar respuesta de IPFS Local:", e);
+        throw e;
+      }
+    }
+  },
+  {
+    name: "pump.fun",
+    url: "https://pump.fun/api/ipfs",
+    method: "POST",
+    getFormData: (formData: FormData) => formData, // Usa el formData tal cual
+    processResponse: async (response: Response) => {
+      try {
+        const text = await response.text();
+        console.log("Respuesta IPFS pump.fun (texto):", text);
+        return JSON.parse(text);
+      } catch (e) {
+        console.error("Error parsing pump.fun response:", e);
+        throw new Error(`Failed to parse IPFS response: ${e.message}`);
+      }
+    }
+  }
+];
+
 const retryFetch = async (url: string, options: RequestInit, maxRetries = 3) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -107,6 +142,57 @@ const retryFetch = async (url: string, options: RequestInit, maxRetries = 3) => 
   }
   throw new Error(`Failed after ${maxRetries} retries`)
 }
+
+// Función para subir a IPFS usando múltiples servicios con fallback
+const uploadToIPFS = async (formData: FormData, updateStatus?: (status: string) => void) => {
+  let lastError;
+  
+  for (const service of IPFS_SERVICES) {
+    try {
+      if (updateStatus) {
+        updateStatus(`Intentando subir a IPFS usando ${service.name}...`);
+      }
+      console.log(`Intentando subir a IPFS usando ${service.name}...`);
+      
+      const serviceFormData = service.getFormData(formData);
+      
+      // Aumentar el número de reintentos a 4 con un timeout más grande
+      const response = await retryFetch(service.url, {
+        method: service.method,
+        body: serviceFormData,
+      }, 4);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error en respuesta de ${service.name}:`, errorText);
+        lastError = new Error(`Failed to upload to ${service.name}: ${errorText}`);
+        continue; // Probar con el siguiente servicio
+      }
+      
+      // Procesar respuesta según el servicio
+      const result = await service.processResponse(response);
+      console.log(`Subida exitosa a ${service.name}:`, result);
+      
+      if (result && result.success && result.metadataUri) {
+        if (updateStatus) {
+          updateStatus(`Datos subidos exitosamente a ${service.name}`);
+        }
+        return result;
+      } else {
+        console.error(`Respuesta de ${service.name} no contiene los datos esperados:`, result);
+        lastError = new Error(`Respuesta incompleta de ${service.name}`);
+        continue;
+      }
+    } catch (error) {
+      console.error(`Error al usar ${service.name}:`, error);
+      lastError = error;
+      // Continuar con el siguiente servicio
+    }
+  }
+  
+  // Si llegamos aquí, todos los servicios fallaron
+  throw lastError || new Error("Failed to upload to all IPFS services");
+};
 
 export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
   // Si no está abierto, no renderizar nada
@@ -469,30 +555,9 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       if (websiteUrl) formData.append("website", websiteUrl);
       formData.append("showName", "true");
       
-      // 2. Subir metadatos e imagen a IPFS con reintentos
+      // 2. Subir metadatos e imagen a IPFS usando múltiples servicios
       console.log("Uploading token metadata to IPFS...");
-      const ipfsResponse = await retryFetch("https://pump.fun/api/ipfs", {
-        method: "POST",
-        body: formData,
-      }, 3);
-      
-      if (!ipfsResponse.ok) {
-        const errorText = await ipfsResponse.text();
-        console.error("Error en respuesta IPFS:", errorText);
-        throw new Error(`Failed to upload to IPFS: ${errorText}`);
-      }
-      
-      const responseText = await ipfsResponse.text();
-      console.log("Respuesta IPFS (texto):", responseText);
-      
-      let metadataResponseJSON;
-      try {
-        metadataResponseJSON = JSON.parse(responseText);
-        console.log("IPFS upload successful:", metadataResponseJSON);
-      } catch (e) {
-        console.error("Error al parsear respuesta JSON:", e);
-        throw new Error("Invalid JSON response from IPFS");
-      }
+      const metadataResponseJSON = await uploadToIPFS(formData, setErrorMessage);
       
       if (!metadataResponseJSON.metadataUri) {
         throw new Error("No se recibió URI de metadatos desde IPFS");
@@ -614,7 +679,7 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
               address: mintKeypair.publicKey.toString(),
               name: tokenName,
               symbol: tokenSymbol,
-      tiktokUrl,
+              tiktokUrl,
               tiktokId: videoId,
               creator: publicKey.toString(),
               timestamp: Date.now(),

@@ -139,7 +139,7 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen bg-black text-white flex flex-col">
+    <main className="h-screen bg-black text-white flex flex-col overflow-hidden">
       {/* Header */}
       <header className="w-full border-b border-[#333] bg-black">
         <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-4">
@@ -173,11 +173,11 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex relative">
+      <div className="flex-1 flex relative overflow-hidden">
         {/* Left/Main Panel (Full width on mobile) */}
-        <div className="flex-1 flex md:w-[calc(100%-20rem)]">
+        <div className="flex-1 flex md:w-[calc(100%-20rem)] overflow-hidden">
           {/* Explorer Section (Full width on mobile, left panel on desktop) */}
-          <div className="w-full md:w-80 border-r border-[#333] p-4 flex flex-col gap-4 overflow-y-auto">
+          <div className="w-full md:w-80 border-r border-[#333] p-4 flex flex-col gap-4 overflow-hidden">
             <div className="flex justify-between items-center">
               <h2 className="text-sm font-mono">EXPLORE VIRAL</h2>
               <button 
@@ -186,12 +186,14 @@ export default function Home() {
                 VIEW ALL
               </button>
             </div>
-            <TikTokMiniExplorer onSelectToken={handleOpenTokenDetail} />
+            <div className="flex-1 overflow-hidden">
+              <TikTokMiniExplorer onSelectToken={handleOpenTokenDetail} />
+            </div>
           </div>
 
           {/* Center Panel (Hidden on mobile) */}
-          <div className="hidden md:flex flex-1 flex-col">
-            <div className="flex-1 flex items-center justify-center p-4">
+          <div className="hidden md:flex flex-1 flex-col overflow-hidden">
+            <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
               <TikTokCarousel />
             </div>
           </div>
@@ -201,7 +203,7 @@ export default function Home() {
         <div
           className={`
           fixed md:relative top-0 right-0 w-80 h-full bg-black border-l border-[#333] 
-          transform transition-transform duration-300 ease-in-out z-50
+          transform transition-transform duration-300 ease-in-out z-50 overflow-hidden
           ${isRightPanelOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
         `}
         >

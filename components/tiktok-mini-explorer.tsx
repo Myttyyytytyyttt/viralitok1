@@ -179,7 +179,7 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-y-auto" style={{ maxHeight: "calc(100vh - 150px)" }}>
       {displayTokens.map((token, index) => {
         // Verificar si este token es nuevo
         const isNewToken = newTokenAddresses.includes(token.address);

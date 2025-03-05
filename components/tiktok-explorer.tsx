@@ -159,7 +159,7 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
   };
 
   return (
-    <div className="w-full mx-auto">
+    <div className="w-full mx-auto h-full flex flex-col">
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
         <input
@@ -184,7 +184,7 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
           No se encontraron tokens. ¡Crea el primero!
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 150px)" }}>
           {filteredTokens.length > 0 ? (
             filteredTokens.map((token, index) => {
               const isNewToken = newTokenAddresses.includes(token.address);

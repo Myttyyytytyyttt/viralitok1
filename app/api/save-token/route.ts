@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
           creator: tokenData.creator,
           timestamp: tokenData.timestamp,
           signature: tokenData.signature,
-          // Normalizar URL para asegurar que siempre sea una URL de IPFS directa
-          image_url: normalizeImageUrl(tokenData.imageUrl)
+          // Guardar la URL de la imagen tal cual viene, sin modificarla
+          image_url: tokenData.imageUrl || ''
         }
       ])
       .select()

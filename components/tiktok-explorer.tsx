@@ -208,33 +208,19 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
                   )}
                   <div className="flex p-3">
                     <div className="w-16 h-16 bg-gray-900 rounded-sm overflow-hidden relative mr-3">
-                      {/* Comprobar si es una URL de IPFS y mostrarla sin optimizar */}
-                      {token.imageUrl && (token.imageUrl.includes('ipfs.io') || token.imageUrl.includes('Qm')) ? (
-                        <Image
-                          src={token.imageUrl.startsWith('https://ipfs.io') ? token.imageUrl : `https://ipfs.io/ipfs/${token.imageUrl.match(/Qm[a-zA-Z0-9]+/)?.[0] || ''}`}
-                          alt={token.name}
-                          fill
-                          unoptimized={true}
-                          className="object-cover"
-                          style={{
-                            transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
-                            transition: 'transform 0.5s ease-in-out',
-                            animation: isNewToken ? 'scale 2s infinite' : 'none',
-                          }}
-                        />
-                      ) : (
-                        <Image
-                          src={token.imageUrl || "/placeholder.svg"}
-                          alt={token.name}
-                          fill
-                          className="object-cover"
-                          style={{
-                            transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
-                            transition: 'transform 0.5s ease-in-out',
-                            animation: isNewToken ? 'scale 2s infinite' : 'none',
-                          }}
-                        />
-                      )}
+                      {/* Mostrar la imagen del token utilizando unoptimized para todas las imágenes externas */}
+                      <Image
+                        src={token.imageUrl || "/placeholder.svg"}
+                        alt={token.name}
+                        fill
+                        unoptimized={token.imageUrl?.startsWith('https://') || false}
+                        className="object-cover"
+                        style={{
+                          transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
+                          transition: 'transform 0.5s ease-in-out',
+                          animation: isNewToken ? 'scale 2s infinite' : 'none',
+                        }}
+                      />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-6 h-6 rounded-full border border-[#333] flex items-center justify-center text-xs">
                           ▶

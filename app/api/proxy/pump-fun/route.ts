@@ -28,14 +28,15 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    // Obtener la respuesta y devolverla al cliente
-    const responseData = await response.text();
-    console.log("Datos recibidos de pump.fun:", responseData.substring(0, 100) + "...");
+    // Obtener la respuesta como texto para asegurarnos de no modificar nada
+    const responseText = await response.text();
+    console.log("Respuesta de pump.fun (primeros 150 caracteres):", responseText.substring(0, 150));
     
-    return new NextResponse(responseData, {
+    // Devolver el texto exacto tal como viene de pump.fun sin ninguna modificación
+    return new NextResponse(responseText, {
       status: 200,
       headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Content-Type': 'application/json',
       },
     });
   } catch (error) {

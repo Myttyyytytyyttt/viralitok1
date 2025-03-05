@@ -25,7 +25,13 @@ const nextConfig = {
       { protocol: 'https', hostname: 'dweb.link' },
       { protocol: 'https', hostname: 'gateway.ipfs.io' },
       { protocol: 'https', hostname: '*.ipfs.dweb.link' },
+      { protocol: 'https', hostname: '*.ipfs.cf-ipfs.com' },
+      { protocol: 'https', hostname: 'arweave.net' },
+      { protocol: 'https', hostname: '*.arweave.net' },
+      { protocol: 'https', hostname: 'ar-io.net' },
+      { protocol: 'https', hostname: '*.ar-io.net' },
     ],
+    unoptimized: true, // Deshabilitar la optimización global de imágenes
   },
   
   // Configuración para WebAssembly en Vercel

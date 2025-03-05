@@ -174,34 +174,14 @@ const uploadToIPFS = async (formData: FormData, updateStatus?: (status: string) 
       const result = await service.processResponse(response);
       console.log(`Subida exitosa a ${service.name}:`, result);
       
-      // Asegurarnos de guardar siempre URLs directas de IPFS
-      if (result && result.success) {
-        // Si la respuesta viene de pump.fun, asegurarse de extraer la URL de imagen directa
-        if (service.name === "pump.fun (proxy)" && result.metadata && result.metadata.image) {
-          // Guardar la URL directa de la imagen en la respuesta
-          result.imageUrl = result.metadata.image;
+      // Verificamos que el resultado sea válido y contenga metadataUri
+      if (result && result.metadataUri) {
+        if (updateStatus) {
+          updateStatus(`Successfully uploaded data to ${service.name}`);
         }
-        
-        // Si tenemos metadataUri pero no es una URL directa de IPFS, intentar convertirla
-        if (result.metadataUri && !result.metadataUri.startsWith('https://ipfs.io/ipfs/')) {
-          const cidMatch = result.metadataUri.match(/\/ipfs\/([a-zA-Z0-9]+)/);
-          if (cidMatch && cidMatch[1]) {
-            result.metadataUri = `https://ipfs.io/ipfs/${cidMatch[1]}`;
-          }
-        }
-        
-        if (result.metadataUri) {
-          if (updateStatus) {
-            updateStatus(`Datos subidos exitosamente a ${service.name}`);
-          }
-          return result;
-        } else {
-          console.error(`Respuesta de ${service.name} no contiene los datos esperados:`, result);
-          lastError = new Error(`Incomplete response from ${service.name}`);
-          continue;
-        }
+        return result;
       } else {
-        console.error(`Respuesta de ${service.name} no contiene los datos esperados:`, result);
+        console.error(`Respuesta de ${service.name} no contiene metadataUri:`, result);
         lastError = new Error(`Incomplete response from ${service.name}`);
         continue;
       }
@@ -601,28 +581,20 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         throw new Error("No metadata URI received from IPFS");
       }
       
-      // Guardar la URL de la imagen para usarla más tarde - extraer URL directa de IPFS
+      // Guardar la URL de la imagen para usarla más tarde
       let imageUrl = '';
 
-      // Intentar obtener la URL de imagen de varias fuentes posibles
+      // Según la documentación de Pump Portal, la imagen está en metadata.image
       if (metadataResponseJSON.metadata && metadataResponseJSON.metadata.image) {
-        // Opción 1: Metadata de Pump.fun contiene la URL directa
         imageUrl = metadataResponseJSON.metadata.image;
-      } else if (metadataResponseJSON.imageUrl) {
-        // Opción 2: Campo imageUrl en la respuesta
-        imageUrl = metadataResponseJSON.imageUrl;
-      } else if (metadataResponseJSON.image) {
-        // Opción 3: Campo image en la respuesta
+      } 
+      // Respaldo si no hay metadata directamente
+      else if (metadataResponseJSON.image) {
         imageUrl = metadataResponseJSON.image;
       } 
-
-      // Asegurarnos de que la URL sea directa a IPFS cuando sea posible
-      if (imageUrl && !imageUrl.startsWith('https://ipfs.io/ipfs/')) {
-        // Intentar extraer CID de IPFS de URLs proxy
-        const proxyMatch = imageUrl.match(/\/api\/ipfs\/asset\/(Qm[a-zA-Z0-9]+)/);
-        if (proxyMatch && proxyMatch[1]) {
-          imageUrl = `https://ipfs.io/ipfs/${proxyMatch[1]}`;
-        }
+      // Último respaldo para nuestro servidor local
+      else if (metadataResponseJSON.imageUrl) {
+        imageUrl = metadataResponseJSON.imageUrl;
       }
 
       console.log("URL de imagen capturada:", imageUrl);

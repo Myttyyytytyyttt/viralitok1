@@ -82,10 +82,10 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
     if (isVisible) {
       fetchTokens();
       
-      // Configurar intervalo para verificar nuevos tokens cada 7 segundos
-      intervalRef.current = setInterval(() => {
-        fetchTokens();
-      }, 7000);
+      // Eliminamos el intervalo para evitar múltiples llamadas a la API
+      // intervalRef.current = setInterval(() => {
+      //  fetchTokens();
+      // }, 7000);
     }
     
     // Limpiar intervalo cuando se desmonte o se oculte
@@ -97,19 +97,19 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
     };
   }, [isVisible]); // Reaccionar a cambios en la visibilidad
 
-  // Si el componente cambia de oculto a visible, actualizar tokens
+  // Si el componente cambia de oculto a visible, actualizar tokens una sola vez
   useEffect(() => {
-    if (isVisible && !intervalRef.current) {
+    if (isVisible && !intervalRef.current && isFirstLoadRef.current) {
       // Marcar como primera carga para evitar falsos positivos de nuevos tokens
-      isFirstLoadRef.current = true;
+      isFirstLoadRef.current = false;
       
-      // Cargar tokens inmediatamente
+      // Cargar tokens inmediatamente una sola vez
       fetchTokens();
       
-      // Reiniciar el intervalo
-      intervalRef.current = setInterval(() => {
-        fetchTokens();
-      }, 7000);
+      // Ya no configuramos el intervalo para ahorrar llamadas a la API
+      // intervalRef.current = setInterval(() => {
+      //   fetchTokens();
+      // }, 7000);
     } else if (!isVisible && intervalRef.current) {
       // Detener el intervalo si el componente se oculta
       clearInterval(intervalRef.current);

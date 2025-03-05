@@ -197,15 +197,15 @@ export default function TikTokCarousel() {
   
   // Cargar datos de tokens al montar el componente y cada 30 segundos
   useEffect(() => {
-    // Realizar la primera carga
+    // Realizar la primera carga (una sola vez)
     fetchTokenMetadata();
     
-    // Configurar intervalo para actualizar cada 30 segundos
-    const interval = setInterval(() => {
-      fetchTokenMetadata();
-    }, 30000);
+    // Ya no configuramos el intervalo para ahorrar llamadas a la API
+    // const interval = setInterval(() => {
+    //   fetchTokenMetadata();
+    // }, 30000);
     
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, [fetchTokenMetadata]);
   
   // Función para cambiar slide con fade out manual

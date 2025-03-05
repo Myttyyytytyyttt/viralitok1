@@ -99,13 +99,13 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
 
   // Configurar verificación periódica de nuevos tokens
   useEffect(() => {
-    // Primera carga de tokens
+    // Primera carga de tokens (una sola vez)
     fetchTokens();
     
-    // Configurar intervalo para verificar nuevos tokens cada 5 segundos
-    intervalRef.current = setInterval(() => {
-      fetchTokens();
-    }, 5000);
+    // Ya no configuramos el intervalo para actualizar tokens
+    // intervalRef.current = setInterval(() => {
+    //   fetchTokens();
+    // }, 5000);
     
     // Limpiar intervalo cuando se desmonte el componente
     return () => {

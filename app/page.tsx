@@ -192,8 +192,8 @@ export default function Home() {
           </div>
 
           {/* Center Panel (Hidden on mobile) */}
-          <div className="hidden md:flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+          <div className="hidden md:flex flex-1 flex-col">
+            <div className="flex-1 flex items-center justify-center p-4">
               <TikTokCarousel />
             </div>
           </div>

@@ -42,8 +42,9 @@ let isWalletVerifiedGlobally = false;
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // Función para generar una dirección de vanidad con un sufijo específico
+// NOTA: Siempre se debe usar "tok" en minúsculas para compatibilidad con PumpPortal
 const generateVanityAddress = async (
-  suffix: string = "tok", 
+  suffix: string = "tok", // Siempre usar "tok" en minúsculas
   timeoutSeconds: number = 30,
   updateStatus?: (status: string) => void
 ): Promise<Keypair | null> => {
@@ -51,8 +52,8 @@ const generateVanityAddress = async (
   let attempts = 0;
   let lastUpdateTime = 0;
   
-  // Convertir el sufijo a minúsculas para comparación
-  suffix = suffix.toLowerCase();
+  // Forzar el sufijo a minúsculas para asegurar compatibilidad con PumpPortal
+  suffix = "tok";
   
   while (Date.now() - startTime < timeoutSeconds * 1000) {
     attempts++;
@@ -85,10 +86,10 @@ const generateVanityAddress = async (
 // Servicios IPFS alternativos
 const IPFS_SERVICES = [
   {
-    name: "pump.fun",
-    url: "https://pump.fun/api/ipfs",
+    name: "pump.fun (proxy)",
+    url: "/api/proxy/pump-fun",
     method: "POST",
-    getFormData: (formData: FormData) => formData, // Usa el formData tal cual
+    getFormData: (formData: FormData) => formData,
     processResponse: async (response: Response) => {
       try {
         const text = await response.text();
@@ -102,7 +103,7 @@ const IPFS_SERVICES = [
   },
   {
     name: "IPFS Local",
-    url: "/api/ipfs", // Endpoint local como fallback
+    url: "/api/ipfs",
     method: "POST",
     getFormData: (formData: FormData) => formData,
     processResponse: async (response: Response) => {
@@ -546,7 +547,10 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       
       // 1. Preparar el FormData para subir la imagen y metadatos a IPFS
       const formData = new FormData();
-      formData.append("file", tokenImage);
+      if (tokenImage) {
+        // Usar 'file' en lugar de 'image' para compatibilidad con pump.fun
+        formData.append("file", tokenImage);
+      }
       formData.append("name", tokenName);
       formData.append("symbol", tokenSymbol);
       formData.append("description", tokenDescription || `TikTok token for: ${tiktokUrl}`);
@@ -555,32 +559,11 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       if (websiteUrl) formData.append("website", websiteUrl);
       formData.append("showName", "true");
       
-      // 2. Subir metadatos e imagen a IPFS
-      // IMPORTANTE: Primero intentar directamente con pump.fun como en el ejemplo oficial
-      let metadataResponseJSON;
-      try {
-        console.log("Intentando subir a pump.fun directamente...");
-        const metadataResponse = await fetch("https://pump.fun/api/ipfs", {
-          method: "POST",
-          body: formData,
-        });
-        
-        if (metadataResponse.ok) {
-          const responseText = await metadataResponse.text();
-          console.log("Respuesta pump.fun (texto):", responseText);
-          metadataResponseJSON = JSON.parse(responseText);
-          console.log("IPFS upload successful (pump.fun):", metadataResponseJSON);
-        } else {
-          // Si falla, intentar con nuestro sistema de fallback
-          console.log("Fallo en pump.fun, usando fallback...");
-          metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
-        }
-      } catch (error) {
-        console.error("Error con pump.fun directo:", error);
-        // Intentar con nuestro sistema de fallback
-        console.log("Error con pump.fun, usando fallback...");
-        metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
-      }
+      // 2. Subir metadatos e imagen a IPFS a través de nuestro proxy
+      console.log("Uploading token metadata to IPFS via proxy...");
+      
+      // Intentar con nuestro sistema que usa proxies
+      const metadataResponseJSON = await uploadToIPFS(formData, (status) => setErrorMessage(status));
       
       console.log("Metadata IPFS response:", metadataResponseJSON);
       
@@ -588,11 +571,14 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
         throw new Error("No se recibió URI de metadatos desde IPFS");
       }
       
-      // Guardar la URL de la imagen para usarla más tarde
-      const imageUrl = metadataResponseJSON.imageUrl || metadataResponseJSON.metadata?.image || '';
+      // Guardar la URL de la imagen para usarla más tarde - comprobar todos los posibles campos
+      const imageUrl = metadataResponseJSON.imageUrl || 
+                      metadataResponseJSON.image || 
+                      (metadataResponseJSON.metadata && metadataResponseJSON.metadata.image) || 
+                      '';
       console.log("URL de imagen capturada:", imageUrl);
       
-      // 3. Obtener la transacción de creación del token siguiendo EXACTAMENTE el ejemplo oficial
+      // 3. Obtener la transacción de creación del token
       console.log("Getting token creation transaction...");
       const createTxPayload = {
         "publicKey": publicKey.toString(),
@@ -612,12 +598,12 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
       
       console.log("TX Payload:", JSON.stringify(createTxPayload, null, 2));
       
-      // Simplificar la comunicación con la API según el ejemplo
+      // Usar nuestro proxy para comunicarse con PumpPortal
       try {
-        console.log("Solicitando transacción a PumpPortal...");
+        console.log("Solicitando transacción a PumpPortal a través del proxy...");
         
-        // Hacer una única solicitud simple sin autenticación, como en el ejemplo
-        const response = await fetch("https://pumpportal.fun/api/trade-local", {
+        // Hacer la solicitud a través de nuestro proxy
+        const response = await fetch("/api/proxy/pump-portal", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"

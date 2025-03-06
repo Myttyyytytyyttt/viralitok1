@@ -152,7 +152,7 @@ export default function Home() {
           {/* Right Section */}
           <div className="flex gap-4 items-center">
             <div className="hidden md:flex gap-4">
-              <a href="https://twitter.com/Viralitok_sol" target="_blank" rel="noopener noreferrer" className="px-6 py-2 text-sm border border-[#333] rounded-sm hover:bg-[#111] transition flex items-center gap-2">
+              <a href="https://twitter.com/Viralfundottv" target="_blank" rel="noopener noreferrer" className="px-6 py-2 text-sm border border-[#333] rounded-sm hover:bg-[#111] transition flex items-center gap-2">
                 <Twitter size={16} />
                 FOLLOW TWITTER
               </a>
@@ -222,8 +222,8 @@ export default function Home() {
                 <div className="space-y-1">
                   <h3 className="text-sm font-mono text-[#8A2BE2]">ABOUT</h3>
                   <p className="text-xs text-gray-400 leading-relaxed">
-                    Transform viral TikTok content into tradeable digital assets. Our protocol enables creators to
-                    monetize their influence through blockchain technology.
+                    Transform Viral content into tradeable digital assets. Our protocol enables creators to
+                    monetize their influence through Solana.
                   </p>
                 </div>
 
@@ -321,7 +321,7 @@ export default function Home() {
                 START TOKENIZING
               </button>
               <button className="w-full py-2 border border-[#333] hover:bg-[#111] transition flex items-center justify-center gap-2 rounded-sm text-sm">
-                <a href="https://pump.fun/token/vtok" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
+                <a href="https://pump.fun/token/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
                   BUY $VIRAL
                 </a>
               </button>

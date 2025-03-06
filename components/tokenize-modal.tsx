@@ -720,7 +720,7 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
               address: mintKeypair.publicKey.toString(),
               name: tokenName,
               symbol: tokenSymbol,
-              tiktokUrl,
+      tiktokUrl,
               tiktokId: videoId,
               creator: publicKey.toString(),
               timestamp: Date.now(),

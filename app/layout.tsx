@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "ViralFun - Tokenize Anything Viral",
   description: "Turn something viral into tradable tokens",
+  icons: {
+    icon: '/logo.jpg',
+  },
 }
 
 export default function RootLayout({

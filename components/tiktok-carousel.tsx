@@ -33,7 +33,7 @@ const localVideos = [
     likes: "1.2M",
     comments: "24.5K",
     creator: "0x1234...5678",
-    tokenAddress: FEATURED_TOKEN_ADDRESSES.vtok // Dirección del token VTOK
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.TrumpDancing // Dirección del token VTOK
   },
   {
     id: 2,
@@ -45,7 +45,7 @@ const localVideos = [
     likes: "458K",
     comments: "12.3K",
     creator: "0x8765...4321",
-    tokenAddress: FEATURED_TOKEN_ADDRESSES.pump // Dirección del token PUMP
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.gatomalo // Dirección del token PUMP
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const localVideos = [
     likes: "2.4M",
     comments: "56K",
     creator: "0xabcd...efgh",
-    tokenAddress: FEATURED_TOKEN_ADDRESSES.fart // Dirección del otro token
+    tokenAddress: FEATURED_TOKEN_ADDRESSES.Catok // Dirección del otro token
   }
 ];
 

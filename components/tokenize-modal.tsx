@@ -515,11 +515,11 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
     }
     
     // Validar URLs opcionales
-    if (twitterUrl && !twitterUrl.includes("twitter.com")) {
-      stepErrors.twitterUrl = "Invalid Twitter URL";
+    if (twitterUrl && !twitterUrl.match(/\b(twitter\.com|x\.com)\b/)) {
+      stepErrors.twitterUrl = "Invalid Twitter/X URL";
     }
     
-    if (telegramUrl && !telegramUrl.includes("t.me")) {
+    if (telegramUrl && !telegramUrl.match(/\b(t\.me|telegram\.me|telegram\.org)\b/)) {
       stepErrors.telegramUrl = "Invalid Telegram URL";
     }
     

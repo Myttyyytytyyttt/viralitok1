@@ -305,10 +305,12 @@ export default function Home() {
             <div className="space-y-3">
               {/* Mobile-only buttons */}
               <div className="flex md:hidden gap-3 mb-3">
+                <a href="https://www.twitter.com/ViralfundotTV">
                 <button className="flex-1 py-2 border border-[#333] rounded-sm hover:bg-[#111] transition flex items-center justify-center gap-2 text-sm">
                   <Send size={16} />
-                  TELEGRAM
+                  Twitter
                 </button>
+                </a>
                 <button className="flex-1 py-2 border border-[#333] rounded-sm hover:bg-[#111] transition text-sm">
                   CONNECT
                 </button>

@@ -26,9 +26,9 @@ export interface TokenMetadata {
 
 // Direcciones de ejemplo de tokens populares en Pump.fun
 export const FEATURED_TOKEN_ADDRESSES = {
-  vtok: "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK",
-  pump: "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok",
-  fart: "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok" // Ejemplo de otro token popular
+  TrumpDancing: "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK",
+  gatomalo: "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok",
+  Catok: "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok" // Ejemplo de otro token popular
 };
 
 // Caché para almacenar los datos recientes y calcular cambios porcentuales
@@ -57,12 +57,12 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
   
   // Datos hardcodeados para los tokens principales
   const hardcodedData: Record<string, TokenMetadata> = {
-    // VTOK
+    // trumpdacing
     "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK": {
       mint: "5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK",
       standard: "spl-token",
-      name: "VIRAL Token",
-      symbol: "VTOK",
+      name: "TrumpDancing",
+      symbol: "TDAncing",
       logo: TOKEN_LOGOS["5JhhVPKkeMD8t5PJbsgBywCaHvin6T12B4PozepLitoK"],
       decimals: "9",
       metaplex: {
@@ -81,12 +81,12 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       percentChange: "+15.42%"
     },
     
-    // PUMP
+    // gatomalo
     "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok": {
       mint: "7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok",
       standard: "spl-token",
-      name: "PUMP",
-      symbol: "PUMP",
+      name: "gatomalo",
+      symbol: "MALO",
       logo: TOKEN_LOGOS["7AKiHeT66wPVpiGpLu3fJGWMSo5XohD4xgqWVN3HWTok"],
       decimals: "9",
       metaplex: {
@@ -105,12 +105,12 @@ export async function getTokenMetadata(tokenAddress: string): Promise<TokenMetad
       percentChange: "+8.25%"
     },
     
-    // FART
+    // catok
     "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok": {
       mint: "GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok",
       standard: "spl-token",
-      name: "FART",
-      symbol: "FART",
+      name: "catok",
+      symbol: "catok",
       logo: TOKEN_LOGOS["GxMtQbLMHpi1WRfDhif8dSurFSxnen8dTj8nSPfk8Tok"],
       decimals: "9",
       metaplex: {

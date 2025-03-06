@@ -733,6 +733,20 @@ export function TokenizeModal({ isOpen, onClose }: TokenizeModalProps) {
             console.warn("No se pudo guardar la información del token:", await saveResponse.text());
           } else {
             console.log("Información del token guardada con éxito");
+            
+            // Emitir un evento personalizado para notificar a los explorers que un nuevo token ha sido creado
+            try {
+              const newTokenEvent = new CustomEvent('newTokenCreated', { 
+                detail: { 
+                  address: mintKeypair.publicKey.toString(),
+                  timestamp: Date.now() 
+                } 
+              });
+              window.dispatchEvent(newTokenEvent);
+              console.log("Evento de nuevo token emitido");
+            } catch (eventError) {
+              console.error("Error al emitir evento de nuevo token:", eventError);
+            }
           }
         } catch (error) {
           console.error("Warning: Failed to save token info:", error);

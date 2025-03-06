@@ -97,21 +97,40 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
     }
   };
 
-  // Configurar verificación periódica de nuevos tokens
+  // Configurar verificación periódica de nuevos tokens (con menor frecuencia)
   useEffect(() => {
-    // Primera carga de tokens (una sola vez)
+    // Primera carga de tokens
     fetchTokens();
     
-    // Ya no configuramos el intervalo para actualizar tokens
-    // intervalRef.current = setInterval(() => {
-    //   fetchTokens();
-    // }, 5000);
+    // Configurar intervalo para verificar nuevos tokens cada 30 segundos
+    // (una frecuencia más baja para ahorrar llamadas a la API)
+    intervalRef.current = setInterval(() => {
+      fetchTokens();
+    }, 2000); // 2 segundos en lugar de 5 segundos
     
     // Limpiar intervalo cuando se desmonte el componente
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+    };
+  }, []);
+
+  // Escuchar eventos de creación de nuevos tokens
+  useEffect(() => {
+    // Función para manejar el evento de creación de un nuevo token
+    const handleNewToken = (event: CustomEvent<{ address: string, timestamp: number }>) => {
+      console.log("Evento de nuevo token recibido en mini-explorer:", event.detail);
+      // Recargar los tokens inmediatamente
+      fetchTokens();
+    };
+
+    // Añadir el listener de eventos
+    window.addEventListener('newTokenCreated', handleNewToken as EventListener);
+    
+    // Limpiar el listener cuando se desmonte el componente
+    return () => {
+      window.removeEventListener('newTokenCreated', handleNewToken as EventListener);
     };
   }, []);
 

@@ -82,10 +82,10 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
     if (isVisible) {
       fetchTokens();
       
-      // Eliminamos el intervalo para evitar múltiples llamadas a la API
-      // intervalRef.current = setInterval(() => {
-      //  fetchTokens();
-      // }, 7000);
+      // Configurar intervalo para verificar nuevos tokens con menor frecuencia (60 segundos)
+      intervalRef.current = setInterval(() => {
+        fetchTokens();
+      }, 60000);
     }
     
     // Limpiar intervalo cuando se desmonte o se oculte
@@ -97,24 +97,24 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
     };
   }, [isVisible]); // Reaccionar a cambios en la visibilidad
 
-  // Si el componente cambia de oculto a visible, actualizar tokens una sola vez
+  // Escuchar eventos de creación de nuevos tokens
   useEffect(() => {
-    if (isVisible && !intervalRef.current && isFirstLoadRef.current) {
-      // Marcar como primera carga para evitar falsos positivos de nuevos tokens
-      isFirstLoadRef.current = false;
-      
-      // Cargar tokens inmediatamente una sola vez
-      fetchTokens();
-      
-      // Ya no configuramos el intervalo para ahorrar llamadas a la API
-      // intervalRef.current = setInterval(() => {
-      //   fetchTokens();
-      // }, 7000);
-    } else if (!isVisible && intervalRef.current) {
-      // Detener el intervalo si el componente se oculta
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    // Función para manejar el evento de creación de un nuevo token
+    const handleNewToken = (event: CustomEvent<{ address: string, timestamp: number }>) => {
+      console.log("Evento de nuevo token recibido en explorer completo:", event.detail);
+      if (isVisible) {
+        // Recargar los tokens inmediatamente
+        fetchTokens();
+      }
+    };
+
+    // Añadir el listener de eventos
+    window.addEventListener('newTokenCreated', handleNewToken as EventListener);
+    
+    // Limpiar el listener cuando se desmonte el componente
+    return () => {
+      window.removeEventListener('newTokenCreated', handleNewToken as EventListener);
+    };
   }, [isVisible]);
 
   // Función para extraer el nombre de usuario del TikTok URL

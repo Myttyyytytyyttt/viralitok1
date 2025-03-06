@@ -13,6 +13,7 @@ import { CustomWalletButton } from '@/components/ui/custom-wallet-button'
 import TikTokExplorer from "@/components/tiktok-explorer"
 import TokenDetailModal from "@/components/token-detail-modal"
 import { TokenData } from "@/types"
+import { RainbowButton } from "@/components/ui/rainbow-button"
 
 // Función que convierte letras a números aleatoriamente
 const hackerEffect = (text: string, activePositions: {textIndex: number, charIndex: number}[]): string => {
@@ -313,13 +314,13 @@ export default function Home() {
                 </button>
               </div>
 
-              <button 
+              <RainbowButton 
                 onClick={handleTokenizeClick}
-                className="w-full py-3 bg-gradient-to-r from-[#8A2BE2] to-[#4CAF50] hover:opacity-90 transition rounded-sm relative group overflow-hidden flex items-center justify-center gap-2 font-mono"
+                className="w-full py-3 font-mono flex items-center justify-center gap-2"
               >
                 <Plus size={18} />
                 START TOKENIZING
-              </button>
+              </RainbowButton>
               <button className="w-full py-2 border border-[#333] hover:bg-[#111] transition flex items-center justify-center gap-2 rounded-sm text-sm">
                 <a href="https://pump.fun/token/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
                   BUY $VIRAL

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import Image from "next/image"
-import { DollarSign, Loader, Star } from "lucide-react"
+import { DollarSign, Loader, Star, Shield, Award } from "lucide-react"
 import { TokenData } from "@/types"
 
 // Datos de ejemplo como fallback
@@ -60,8 +60,22 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
         // Obtener las direcciones de tokens que ya teníamos
         const prevAddresses = previousTokensRef.current;
         
-        // Ordenar por timestamp (más recientes primero)
-        const sortedTokens = [...data.tokens].sort((a, b) => b.timestamp - a.timestamp);
+        // Identificar el token oficial que termina en "viral"
+        const officialToken = data.tokens.find((token: TokenData) => 
+          token.address.toLowerCase().endsWith('viral')
+        );
+        
+        // Organizar los tokens: primero el oficial, después los demás ordenados por timestamp
+        let sortedTokens = [...data.tokens].sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Si existe el token oficial, reorganizamos la lista
+        if (officialToken) {
+          // Remover el token oficial de su posición actual (si existe)
+          sortedTokens = sortedTokens.filter(t => t.address !== officialToken.address);
+          // Ponerlo al principio de la lista
+          sortedTokens.unshift(officialToken);
+        }
+        
         const currentAddresses = sortedTokens.map(token => token.address);
         
         // Detectar nuevos tokens (que están en currentAddresses pero no en prevAddresses)
@@ -72,10 +86,21 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
           console.log("New token!", newTokens);
           setNewTokenAddresses(newTokens);
           
-          // Eliminar la animación después de 5 segundos
+          // Eliminar la animación después de 5 segundos (excepto para el token oficial)
           setTimeout(() => {
-            setNewTokenAddresses([]);
+            // Mantener solo el token oficial en la lista de "nuevos", si existe
+            if (officialToken && newTokens.includes(officialToken.address)) {
+              setNewTokenAddresses([officialToken.address]);
+            } else {
+              setNewTokenAddresses([]);
+            }
           }, 5000);
+        } else if (officialToken) {
+          // Asegurarse de que el token oficial siempre esté en la lista de "nuevos"
+          // aunque no sea realmente nuevo, para que mantenga su estilo especial
+          setNewTokenAddresses((prev) => 
+            prev.includes(officialToken.address) ? prev : [...prev, officialToken.address]
+          );
         }
         
         // Actualizar nuestra referencia de tokens previos
@@ -106,7 +131,7 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
     // (una frecuencia más baja para ahorrar llamadas a la API)
     intervalRef.current = setInterval(() => {
       fetchTokens();
-    }, 2000); // 2 segundos en lugar de 5 segundos
+    }, 30000); // 30 segundos
     
     // Limpiar intervalo cuando se desmonte el componente
     return () => {
@@ -160,6 +185,12 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
     return `${seconds}s ago`;
   };
 
+  // Verificar si un token es el token oficial
+  const isOfficialToken = (address: string): boolean => {
+    // Check if the address ends with either "viral" or "vfun"
+    return address.toLowerCase().endsWith('viral') || address.toLowerCase().endsWith('vfun');
+  };
+
   // Manejador para cuando se hace clic en un token
   const handleTokenClick = (token: TokenData) => {
     if (onSelectToken) {
@@ -202,21 +233,31 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
       {displayTokens.map((token, index) => {
         // Verificar si este token es nuevo
         const isNewToken = newTokenAddresses.includes(token.address);
+        // Verificar si es el token oficial
+        const official = isOfficialToken(token.address);
         
         return (
           <div
             key={token.address || index}
-            className={`border ${isNewToken ? 'border-[#8A2BE2]' : 'border-[#333]'} 
+            className={`border ${official ? 'border-[#FFD700]' : isNewToken ? 'border-[#8A2BE2]' : 'border-[#333]'} 
                       bg-black rounded-sm overflow-hidden hover:border-[#8A2BE2] transition cursor-pointer p-2 flex gap-3
-                      ${isNewToken ? 'relative' : ''}`}
+                      ${isNewToken || official ? 'relative' : ''}`}
             style={{
-              animation: isNewToken ? 'pulse 2s ease-in-out infinite' : 'none',
-              boxShadow: isNewToken ? '0 0 10px rgba(138, 43, 226, 0.7)' : 'none',
+              animation: official ? 'glow 3s ease-in-out infinite' : isNewToken ? 'pulse 2s ease-in-out infinite' : 'none',
+              boxShadow: official ? '0 0 15px rgba(255, 215, 0, 0.7)' : isNewToken ? '0 0 10px rgba(138, 43, 226, 0.7)' : 'none',
             }}
             onClick={() => handleTokenClick(token)}
           >
-            {/* Etiqueta de "Nuevo" para tokens nuevos */}
-            {isNewToken && (
+            {/* Etiqueta para el token oficial */}
+            {official && (
+              <div className="absolute -top-1 -right-1 bg-[#FFD700] text-black text-[10px] px-2 py-1 rounded-sm flex items-center gap-1 z-10">
+                <Shield size={10} className="fill-black" />
+                <span className="font-bold">OFFICIAL</span>
+              </div>
+            )}
+            
+            {/* Etiqueta de "Nuevo" para tokens nuevos (no oficiales) */}
+            {isNewToken && !official && (
               <div className="absolute -top-1 -right-1 bg-[#8A2BE2] text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 z-10 animate-bounce">
                 <Star size={10} className="fill-white" />
                 <span>New!</span>
@@ -230,23 +271,33 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
                 alt={token.name} 
                 fill 
                 unoptimized={token.imageUrl?.startsWith('https://') || false}
-                className="object-cover" 
+                className={`object-cover ${official ? 'ring-2 ring-[#FFD700]' : ''}`}
                 style={{
-                  transform: isNewToken ? 'scale(1.05)' : 'scale(1)',
+                  transform: (isNewToken || official) ? 'scale(1.05)' : 'scale(1)',
                   transition: 'transform 0.5s ease-in-out',
-                  animation: isNewToken ? 'scale 2s infinite' : 'none',
+                  animation: (isNewToken || official) ? 'scale 2s infinite' : 'none',
                 }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-6 h-6 rounded-full border border-[#333] flex items-center justify-center text-xs">
+                <div className={`w-6 h-6 rounded-full border ${official ? 'border-[#FFD700]' : 'border-[#333]'} flex items-center justify-center text-xs`}>
                   ▶
                 </div>
               </div>
+              
+              {/* Insignia para el token oficial */}
+              {official && (
+                <div className="absolute -bottom-1 -right-1 bg-[#FFD700] text-black rounded-full w-5 h-5 flex items-center justify-center">
+                  <Award size={12} className="fill-black" />
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col justify-between min-w-0">
               <div>
-                <h3 className="font-medium text-sm truncate">{token.name}</h3>
+                <h3 className={`font-medium text-sm truncate ${official ? 'text-[#FFD700]' : ''}`}>
+                  {token.name}
+                  {official && <span className="ml-1 text-[10px] bg-[#FFD700] text-black px-1 rounded-sm">VIRAL</span>}
+                </h3>
                 <p className="text-xs text-gray-400 truncate">
                   {extractUsername(token.tiktokUrl)}
                 </p>
@@ -254,10 +305,12 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
                   {getRelativeTime(token.timestamp)}
                 </p>
               </div>
-              <div className="flex items-center gap-1 bg-[#111] px-2 py-0.5 rounded-full text-xs w-fit">
-                <DollarSign size={12} className="text-[#8A2BE2]" />
+              <div className={`flex items-center gap-1 ${official ? 'bg-[#FFD700]/20' : 'bg-[#111]'} px-2 py-0.5 rounded-full text-xs w-fit`}>
+                <DollarSign size={12} className={official ? 'text-[#FFD700]' : 'text-[#8A2BE2]'} />
                 <span>{token.symbol}</span>
-                <span className="text-[9px] text-green-500">{"tok"}</span>
+                <span className={`text-[9px] ${official ? 'text-[#FFD700]' : 'text-green-500'}`}>
+                  {official ? (token.address.toLowerCase().endsWith('viral') ? "viral" : "vfun") : "tok"}
+                </span>
               </div>
             </div>
           </div>
@@ -270,6 +323,12 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
           0% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.5); }
           50% { box-shadow: 0 0 15px rgba(138, 43, 226, 0.8); }
           100% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.5); }
+        }
+        
+        @keyframes glow {
+          0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+          100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
         }
         
         @keyframes scale {

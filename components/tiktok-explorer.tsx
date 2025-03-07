@@ -21,6 +21,12 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstLoadRef = useRef(true);
 
+  // Verificar si un token es el token oficial
+  const isOfficialToken = (address: string): boolean => {
+    // Check if the address ends with either "viral" or "vfun"
+    return address.toLowerCase().endsWith('viral') || address.toLowerCase().endsWith('vfun');
+  };
+
   // Función para verificar y obtener tokens de la API
   const fetchTokens = async () => {
     try {
@@ -36,8 +42,19 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
         // Obtener direcciones de tokens anteriores
         const prevAddresses = previousTokensRef.current;
         
-        // Ordenar por timestamp (más recientes primero)
-        const sortedTokens = [...data.tokens].sort((a, b) => b.timestamp - a.timestamp);
+        // Identificar los tokens oficiales
+        const officialTokens = data.tokens.filter((token: TokenData) => 
+          isOfficialToken(token.address)
+        );
+        
+        // Organizar los tokens: primero los oficiales, después los demás ordenados por timestamp
+        let sortedTokens = [...data.tokens]
+          .filter(token => !isOfficialToken(token.address)) // Quitar los oficiales
+          .sort((a, b) => b.timestamp - a.timestamp);       // Ordenar el resto por timestamp
+        
+        // Agregar los oficiales al principio
+        sortedTokens = [...officialTokens, ...sortedTokens];
+        
         const currentAddresses = sortedTokens.map(token => token.address);
         
         // Solo detectar nuevos tokens si no es la primera carga
@@ -188,6 +205,7 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
           {filteredTokens.length > 0 ? (
             filteredTokens.map((token, index) => {
               const isNewToken = newTokenAddresses.includes(token.address);
+              const official = isOfficialToken(token.address);
               
               return (
                 <div
@@ -236,7 +254,9 @@ export default function TikTokExplorer({ isVisible = true, onSelectToken }: TikT
                       <div className="flex items-center gap-1 bg-[#222] px-2 py-0.5 rounded-full text-xs w-fit">
                         <DollarSign size={12} className="text-[#8A2BE2]" />
                         <span>{token.symbol}</span>
-                        <span className="text-green-500 text-[9px]">{"tok"}</span>
+                        <span className={`text-xs ${official ? 'text-[#FFD700]' : 'text-green-500'}`}>
+                          {official ? (token.address.toLowerCase().endsWith('viral') ? "viral" : "vfun") : "tok"}
+                        </span>
                       </div>
                     </div>
                   </div>

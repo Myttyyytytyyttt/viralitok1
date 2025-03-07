@@ -60,9 +60,9 @@ export default function TikTokMiniExplorer({ onSelectToken }: TikTokMiniExplorer
         // Obtener las direcciones de tokens que ya teníamos
         const prevAddresses = previousTokensRef.current;
         
-        // Identificar el token oficial que termina en "viral"
+        // Identificar el token oficial que termina en "viral" o "vfun"
         const officialToken = data.tokens.find((token: TokenData) => 
-          token.address.toLowerCase().endsWith('viral')
+          token.address.toLowerCase().endsWith('viral') || token.address.toLowerCase().endsWith('vfun')
         );
         
         // Organizar los tokens: primero el oficial, después los demás ordenados por timestamp

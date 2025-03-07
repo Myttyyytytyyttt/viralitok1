@@ -324,7 +324,7 @@ export default function Home() {
                 START TOKENIZING
               </RainbowButton>
               <button className="w-full py-2 border border-[#333] hover:bg-[#111] transition flex items-center justify-center gap-2 rounded-sm text-sm">
-                <a href="https://pump.fun/token/667UF1CQTAguGQth5fLEuMNTZDrvfBNAom6vAQ5wvFun" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
+                <a href="https://pump.fun/coin/667UF1CQTAguGQth5fLEuMNTZDrvfBNAom6vAQ5wvFun" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full h-full">
                   BUY $VIRAL
                 </a>
               </button>
